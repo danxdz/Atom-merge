@@ -128,17 +128,8 @@ async function boot() {
         body.position.z = 0;
         body.velocity.z = 0;
         atoms[zi].mesh.position.z = 0;
-        // Gravity boost: apply strong downward force for several frames after merge
-        if (atoms[zi].gravBoost > 0) {
-          atoms[zi].gravBoost--;
-          body.velocity.y -= 1.5;  // persistent pull each frame
-          body.wakeUp();
-        }
-        // Wake any atom above floor with near-zero velocity
-        var vy = Math.abs(body.velocity.y);
-        if (body.position.y > floorY && vy < 0.05) {
-          body.wakeUp();
-        }
+        // Ensure no atom ever sleeps (prevents stuck-in-air bugs)
+        if (body.sleepState !== 0) body.wakeUp();
       } catch(e) {}
     }
     scene.render();
@@ -351,7 +342,7 @@ function spawnAtom(tier, x, y, z, skipAnim) {
   sp.material = atomMat(elem);
   sp.isPickable = false;
 
-  var atom = { id: id, mesh: sp, tier: tier, r: elem.r, elem: elem, merging: false, fresh: true, gravBoost: 0 };
+  var atom = { id: id, mesh: sp, tier: tier, r: elem.r, elem: elem, merging: false, fresh: true };
   setTimeout(function () { atom.fresh = false; }, GAME_RULES.settleDelay);
   atoms.push(atom);
 
@@ -391,6 +382,7 @@ function addPhysicsToAtom(sp, elem) {
     sp.physicsImpostor.physicsBody.linearFactor.set(1, 1, 0);
     sp.physicsImpostor.physicsBody.angularDamping = 0.5;
     sp.physicsImpostor.physicsBody.linearDamping = 0.08;
+    sp.physicsImpostor.physicsBody.allowSleep = false;
     sp.physicsImpostor.physicsBody.position.z = 0;
   } catch(e) {}
 }
@@ -596,7 +588,11 @@ function doMerge(a, b) {
   var newTier = a.tier + 1;
   var pts     = calcMergeScore(a.tier);
 
-  // VFX: shrink both
+  // Remove physics from merging atoms IMMEDIATELY — prevents kicking neighbors
+  try { a.mesh.physicsImpostor.dispose(); } catch(e){}
+  try { b.mesh.physicsImpostor.dispose(); } catch(e){}
+
+  // VFX: shrink both (visual only, no physics bodies left)
   shrink(a.mesh);
   shrink(b.mesh);
 
@@ -627,21 +623,13 @@ function doMerge(a, b) {
       var cy = Math.max(yMin, mid.y);
       var na = spawnAtom(newTier, cx, cy, 0, true);
       if (na) {
-        // Persistent gravity boost: 30 frames of extra downward pull
-        na.gravBoost = 30;
         try {
-          var imp = na.mesh.physicsImpostor;
-          imp.setLinearVelocity(new BABYLON.Vector3(0, -4, 0));
-          var body = imp.physicsBody;
-          body.sleepState = 0;
+          var body = na.mesh.physicsImpostor.physicsBody;
           body.wakeUp();
-          body.allowSleep = false;
+          body.velocity.set(0, -2, 0); // gentle downward nudge — never float
           body.position.z = 0;
           na.mesh.position.z = 0;
         } catch(e){}
-        // Re-enable sleep after boost period
-        var naRef = na;
-        setTimeout(function(){ try { naRef.mesh.physicsImpostor.physicsBody.allowSleep = true; } catch(e){} }, 600);
       }
 
       score  += pts;
