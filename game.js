@@ -441,16 +441,57 @@ function updateQueuePreview() {
   }
 }
 
-/* Animated queue transition: sweep first to drop zone, shift others left, new from behind */
+/* Animated queue transition: sweep first ball to drop zone, shift others, new fades in */
 function animateQueueDrop(targetX, callback) {
-  // Dispose old queue meshes immediately
-  for (var i = 0; i < queueMeshes.length; i++) {
-    if (queueMeshes[i]) queueMeshes[i].dispose();
-    queueMeshes[i] = null;
+  var sweepMs = 180;  // quick but visible
+  var frames = Math.round(sweepMs / 16);
+
+  // Snapshot current queue mesh positions before disposing
+  var oldMeshes = queueMeshes.slice();
+  queueMeshes = [null, null, null];
+
+  // Ball 0 (next drop) sweeps down to drop zone
+  var sweeper = oldMeshes[0];
+  var dropTarget = new BABYLON.Vector3(targetX, GAME_RULES.dropY, 2.0);
+
+  // Balls 1,2 slide inward to their new positions (they become 0,1)
+  var sliders = [];
+  for (var s = 1; s < 3; s++) {
+    if (oldMeshes[s]) {
+      sliders.push({ mesh: oldMeshes[s], target: queuePos(s - 1) });
+    }
   }
-  // Rebuild queue instantly — no sweep animation
-  updateQueuePreview();
-  if (callback) callback();
+
+  var frame = 0;
+  var obs = scene.onBeforeRenderObservable.add(function () {
+    frame++;
+    var t = Math.min(frame / frames, 1);
+    var ease = t * (2 - t); // ease-out quad
+
+    // Sweep ball 0 down to drop zone
+    if (sweeper) {
+      BABYLON.Vector3.LerpToRef(sweeper._sweepStart || sweeper.position.clone(), dropTarget, ease, sweeper.position);
+      if (!sweeper._sweepStart) sweeper._sweepStart = sweeper.position.clone();
+      sweeper.scaling.setAll(1 - ease * 0.3); // shrink slightly as it arrives
+    }
+
+    // Slide remaining balls inward
+    for (var j = 0; j < sliders.length; j++) {
+      var sl = sliders[j];
+      if (!sl.start) sl.start = sl.mesh.position.clone();
+      BABYLON.Vector3.LerpToRef(sl.start, sl.target, ease, sl.mesh.position);
+    }
+
+    if (t >= 1) {
+      scene.onBeforeRenderObservable.remove(obs);
+      // Clean up old meshes
+      if (sweeper) sweeper.dispose();
+      for (var k = 0; k < sliders.length; k++) sliders[k].mesh.dispose();
+      // Rebuild fresh queue
+      updateQueuePreview();
+      if (callback) callback();
+    }
+  });
 }
 
 /* ── Drop ───────────────────────────────────────────────────── */
