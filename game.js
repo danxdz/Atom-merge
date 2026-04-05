@@ -406,7 +406,7 @@ function removeAtom(atom) {
 function queuePos(qi) {
   var edge = (CONTAINER.w / 2) - 0.8;  // positive X = screen RIGHT (camera at +Z)
   var spacing = 1.1;
-  var yBase = GAME_RULES.dropY + 1.8;  // above drop zone
+  var yBase = GAME_RULES.dropY + 0.8;  // just above drop zone
   // qi=0 (next/biggest) innermost over play area, qi=2 (smallest) at box edge
   return new BABYLON.Vector3(edge - (2 - qi) * spacing, yBase, 2.0);
 }
@@ -584,11 +584,7 @@ function doMerge(a, b) {
   shrink(a.mesh);
   shrink(b.mesh);
 
-  // VFX: glow flash
-  if (glowLayer) {
-    glowLayer.intensity = 1.8;
-    setTimeout(function () { if (glowLayer) glowLayer.intensity = 0.45; }, 200);
-  }
+  // No full-screen glow flash — only local particle/ring VFX
 
   // VFX: particle burst + ring shockwave
   var newElem = ELEMENT_DB[newTier] || ELEMENT_DB[a.tier];

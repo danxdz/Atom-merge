@@ -459,22 +459,12 @@ function applyMoleculeGameplay(recipe, center) {
   var eff = recipe.effect || '';
   var rad = recipe.effectRadius || 2.5;
 
-  // Clear effects: remove atoms within radius
+  // Clear effects: only give score bonus, do NOT remove other atoms
+  // (removing nearby atoms was causing non-recipe atoms to vanish)
   if (eff.indexOf('clear') >= 0 || eff.indexOf('flash') >= 0 ||
       eff.indexOf('fission') >= 0 || eff.indexOf('meltdown') >= 0 ||
       eff.indexOf('reset') >= 0 || eff.indexOf('corrosive') >= 0) {
-    var toRemove = [];
-    for (var i = 0; i < atoms.length; i++) {
-      var d = BABYLON.Vector3.Distance(center, atoms[i].mesh.getAbsolutePosition());
-      if (d < rad && !atoms[i].merging) toRemove.push(atoms[i]);
-    }
-    // Cap removal at 5 to not be too overpowered
-    toRemove.sort(function(a,b) { return a.tier - b.tier; }); // remove smallest first
-    for (var i = 0; i < Math.min(toRemove.length, 5); i++) {
-      score += (toRemove[i].tier + 1) * 3;
-      try { shrink(toRemove[i].mesh); } catch(e) {}
-      setTimeout((function(atom) { return function() { try { removeAtom(atom); } catch(e){} }; })(toRemove[i]), 120);
-    }
+    score += recipe.points * 2; // bonus points instead of removing atoms
   }
 
   // Compress/pull: apply inward impulse
