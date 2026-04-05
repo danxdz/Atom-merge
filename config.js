@@ -137,7 +137,7 @@ function applyWorld(idx) {
   }
 
   // Renormalize radii: geometric from rMin=0.5 to rMax=3.2 (tighter Suika-like ratio)
-  var rMin = 0.40, rMax = 3.5;
+  var rMin = 0.35, rMax = 2.0;
   var n = slice.length;
   for (var i = 0; i < n; i++) {
     slice[i].tier = i;  // local tier within this world

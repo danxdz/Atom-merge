@@ -415,9 +415,9 @@ function queuePos(qi) {
 // maps to dropQueue[qi+1] since dropQueue[0] is the active drop ball
 function makeQueueBall(qi) {
   var elem = ELEMENT_DB[dropQueue[qi + 1]];
-  var scale = qi === 0 ? 1.0 : (qi === 1 ? 0.75 : 0.5);  // next=full, 2nd=3/4, 3rd=1/2
+  var scale = qi === 0 ? 0.6 : (qi === 1 ? 0.45 : 0.3);  // smaller queue balls
   var diam = elem.r * 2 * scale;
-  if (diam > 2.5) diam = 2.5;
+  if (diam > 1.4) diam = 1.4;
 
   var sp = BABYLON.MeshBuilder.CreateSphere('q3d_' + qi,
     { diameter: diam, segments: 16 }, scene);
