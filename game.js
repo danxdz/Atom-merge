@@ -151,8 +151,10 @@ async function boot() {
 function fitCamera() {
   if (!camera || !engine) return;
   var aspect = engine.getAspectRatio(camera);
-  var needW = CONTAINER.w + 4;
-  var needH = CONTAINER.h + 4;
+  var isPortrait = aspect < 0.85;
+  var pad = isPortrait ? 1.5 : 4;
+  var needW = CONTAINER.w + pad;
+  var needH = CONTAINER.h + pad;
   var camZ = 38;
   var fovForH = 2 * Math.atan(needH / 2 / camZ);
   var fovForW = 2 * Math.atan((needW / 2 / camZ) / aspect);

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Atom Merge</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -40,7 +40,16 @@
       border-radius:0 0 10px 10px;
       pointer-events:none;z-index:10;
       height:48px;
-      min-width:280px;
+      min-width:200px;
+      max-width:calc(100% - 12px);
+      box-sizing:border-box;
+    }
+    @media(max-width:480px){
+      #hud{padding:6px 10px;gap:8px;height:40px}
+      .hud-score .val{font-size:16px}
+      .hud-best{font-size:10px}
+      #hud-energy .e-val{font-size:13px}
+      #etrk{min-width:40px;height:8px}
     }
     #hud>*{pointer-events:auto}
     .hud-score{display:flex;align-items:center;gap:7px;white-space:nowrap}
