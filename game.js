@@ -571,18 +571,9 @@ function doMerge(a, b) {
         try {
           var body = na.mesh.physicsImpostor.physicsBody;
           body.wakeUp();
-          body.velocity.set(0, -0.5, 0); // very gentle downward nudge
+          body.velocity.set(0, 0, 0); // spawn still, let gravity do the work
           body.position.z = 0;
           na.mesh.position.z = 0;
-          // Ghost-phase: disable collision so atom settles gently through overlaps
-          body.collisionResponse = false;
-          setTimeout(function() {
-            try {
-              body.collisionResponse = true;
-              body.velocity.set(0, Math.min(body.velocity.y, -0.3), 0); // keep gentle fall
-              body.wakeUp();
-            } catch(e){}
-          }, 300);
         } catch(e){}
       }
 
