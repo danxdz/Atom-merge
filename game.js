@@ -129,12 +129,12 @@ async function boot() {
         body.velocity.z = 0;
         atoms[zi].mesh.position.z = 0;
         // Clamp velocity — prevent atoms flying out of box on merge
-        var maxV = 6;
+        var maxV = 3;
         var vx = body.velocity.x, vy = body.velocity.y;
         if (vx > maxV) body.velocity.x = maxV;
         if (vx < -maxV) body.velocity.x = -maxV;
         if (vy > maxV) body.velocity.y = maxV;  // cap upward
-        if (vy < -maxV * 3) body.velocity.y = -maxV * 3; // allow faster falling
+        if (vy < -maxV * 4) body.velocity.y = -maxV * 4; // allow faster falling
         // Ensure no atom ever sleeps (prevents stuck-in-air bugs)
         if (body.sleepState !== 0) body.wakeUp();
       } catch(e) {}
@@ -571,17 +571,18 @@ function doMerge(a, b) {
         try {
           var body = na.mesh.physicsImpostor.physicsBody;
           body.wakeUp();
-          body.velocity.set(0, -3, 0); // downward nudge
+          body.velocity.set(0, -0.5, 0); // very gentle downward nudge
           body.position.z = 0;
           na.mesh.position.z = 0;
-          // Ghost-phase: disable collision response so atom falls through overlaps
+          // Ghost-phase: disable collision so atom settles gently through overlaps
           body.collisionResponse = false;
           setTimeout(function() {
             try {
               body.collisionResponse = true;
+              body.velocity.set(0, Math.min(body.velocity.y, -0.3), 0); // keep gentle fall
               body.wakeUp();
             } catch(e){}
-          }, 180);
+          }, 300);
         } catch(e){}
       }
 
