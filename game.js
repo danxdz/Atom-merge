@@ -128,6 +128,13 @@ async function boot() {
         body.position.z = 0;
         body.velocity.z = 0;
         atoms[zi].mesh.position.z = 0;
+        // Clamp velocity — prevent atoms flying out of box on merge
+        var maxV = 6;
+        var vx = body.velocity.x, vy = body.velocity.y;
+        if (vx > maxV) body.velocity.x = maxV;
+        if (vx < -maxV) body.velocity.x = -maxV;
+        if (vy > maxV) body.velocity.y = maxV;  // cap upward
+        if (vy < -maxV * 3) body.velocity.y = -maxV * 3; // allow faster falling
         // Ensure no atom ever sleeps (prevents stuck-in-air bugs)
         if (body.sleepState !== 0) body.wakeUp();
       } catch(e) {}
