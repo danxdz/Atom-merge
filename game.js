@@ -403,12 +403,13 @@ function removeAtom(atom) {
 
 /* ── 3D Queue Preview ──────────────────────────────────────── */
 // Queue sits on the RIGHT side of the screen. qi=0 (next drop) is the LEFTMOST ball.
-function queuePos(qi) {
+function queuePos(qi, diam) {
   var edge = (CONTAINER.w / 2) - 0.8;  // positive X = screen RIGHT (camera at +Z)
   var spacing = 1.1;
-  var yBase = GAME_RULES.dropY + 0.8;  // just above drop zone
+  var yBottom = GAME_RULES.dropY + 0.3;  // bottom-align: all balls sit on this line
+  var r = (diam || 1.0) / 2;
   // qi=0 (next/biggest) innermost over play area, qi=2 (smallest) at box edge
-  return new BABYLON.Vector3(edge - (2 - qi) * spacing, yBase, 2.0);
+  return new BABYLON.Vector3(edge - (2 - qi) * spacing, yBottom + r, 2.0);
 }
 
 // qi = display index (0=leftmost/next, 1=middle, 2=rightmost)
@@ -422,7 +423,7 @@ function makeQueueBall(qi) {
   var sp = BABYLON.MeshBuilder.CreateSphere('q3d_' + qi,
     { diameter: diam, segments: 16 }, scene);
   sp._queueDiam = diam;  // store for sweep scaling
-  sp.position = queuePos(qi);
+  sp.position = queuePos(qi, diam);
 
   var mat = new BABYLON.StandardMaterial('qm_' + qi, scene);
   mat.diffuseTexture = elemTexture(elem);
@@ -459,7 +460,7 @@ function animateQueueDrop(targetX, callback) {
   var sliders = [];
   for (var s = 1; s < 3; s++) {
     if (oldMeshes[s]) {
-      sliders.push({ mesh: oldMeshes[s], target: queuePos(s - 1) });
+      sliders.push({ mesh: oldMeshes[s], target: queuePos(s - 1, oldMeshes[s]._queueDiam || 1.0) });
     }
   }
 
