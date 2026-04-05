@@ -1,0 +1,996 @@
+[
+  {
+    "id": "w1_oh",
+    "world": "w1_origines",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 8,
+        "sym": "O"
+      },
+      {
+        "Z": 1,
+        "sym": "H"
+      }
+    ],
+    "cost": 14,
+    "effect": "chain_spark",
+    "effectRadius": 2.2,
+    "refund": 2,
+    "cooldownSec": 2.5,
+    "priority": 70
+  },
+  {
+    "id": "w1_no",
+    "world": "w1_origines",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 7,
+        "sym": "N"
+      },
+      {
+        "Z": 8,
+        "sym": "O"
+      }
+    ],
+    "cost": 14,
+    "effect": "stabilize_soft",
+    "effectRadius": 2.2,
+    "refund": 1,
+    "cooldownSec": 2.5,
+    "priority": 70
+  },
+  {
+    "id": "w1_co",
+    "world": "w1_origines",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 6,
+        "sym": "C"
+      },
+      {
+        "Z": 8,
+        "sym": "O"
+      }
+    ],
+    "cost": 16,
+    "effect": "compress",
+    "effectRadius": 2.4,
+    "refund": 2,
+    "cooldownSec": 3.0,
+    "priority": 70
+  },
+  {
+    "id": "w1_h2o",
+    "world": "w1_origines",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 1,
+        "sym": "H"
+      },
+      {
+        "Z": 1,
+        "sym": "H"
+      },
+      {
+        "Z": 8,
+        "sym": "O"
+      }
+    ],
+    "cost": 28,
+    "effect": "splash_clear",
+    "effectRadius": 2.6,
+    "refund": 4,
+    "cooldownSec": 4.0,
+    "priority": 82
+  },
+  {
+    "id": "w1_co2",
+    "world": "w1_origines",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 6,
+        "sym": "C"
+      },
+      {
+        "Z": 8,
+        "sym": "O"
+      },
+      {
+        "Z": 8,
+        "sym": "O"
+      }
+    ],
+    "cost": 26,
+    "effect": "smoke_slow",
+    "effectRadius": 2.8,
+    "refund": 2,
+    "cooldownSec": 4.0,
+    "priority": 82
+  },
+  {
+    "id": "w1_nh3",
+    "world": "w1_origines",
+    "difficulty": "hard",
+    "inputs": [
+      {
+        "Z": 7,
+        "sym": "N"
+      },
+      {
+        "Z": 1,
+        "sym": "H"
+      },
+      {
+        "Z": 1,
+        "sym": "H"
+      },
+      {
+        "Z": 1,
+        "sym": "H"
+      }
+    ],
+    "cost": 34,
+    "effect": "fog_repulse",
+    "effectRadius": 2.8,
+    "refund": 0,
+    "cooldownSec": 6.0,
+    "priority": 92
+  },
+  {
+    "id": "w2_fe_co",
+    "world": "w2_alliages_p4",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 26,
+        "sym": "Fe"
+      },
+      {
+        "Z": 27,
+        "sym": "Co"
+      }
+    ],
+    "cost": 16,
+    "effect": "harden",
+    "effectRadius": 2.3,
+    "refund": 1,
+    "cooldownSec": 2.5,
+    "priority": 70
+  },
+  {
+    "id": "w2_ti_v",
+    "world": "w2_alliages_p4",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 22,
+        "sym": "Ti"
+      },
+      {
+        "Z": 23,
+        "sym": "V"
+      }
+    ],
+    "cost": 16,
+    "effect": "lift",
+    "effectRadius": 2.4,
+    "refund": 1,
+    "cooldownSec": 3.0,
+    "priority": 70
+  },
+  {
+    "id": "w2_cr_mn",
+    "world": "w2_alliages_p4",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 24,
+        "sym": "Cr"
+      },
+      {
+        "Z": 25,
+        "sym": "Mn"
+      }
+    ],
+    "cost": 18,
+    "effect": "burst",
+    "effectRadius": 2.4,
+    "refund": 2,
+    "cooldownSec": 3.0,
+    "priority": 70
+  },
+  {
+    "id": "w2_stainless",
+    "world": "w2_alliages_p4",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 26,
+        "sym": "Fe"
+      },
+      {
+        "Z": 24,
+        "sym": "Cr"
+      },
+      {
+        "Z": 28,
+        "sym": "Ni"
+      }
+    ],
+    "cost": 28,
+    "effect": "shield",
+    "effectRadius": 2.7,
+    "refund": 3,
+    "cooldownSec": 4.5,
+    "priority": 82
+  },
+  {
+    "id": "w2_tri_alloy",
+    "world": "w2_alliages_p4",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 22,
+        "sym": "Ti"
+      },
+      {
+        "Z": 24,
+        "sym": "Cr"
+      },
+      {
+        "Z": 23,
+        "sym": "V"
+      }
+    ],
+    "cost": 30,
+    "effect": "shear_wave",
+    "effectRadius": 2.9,
+    "refund": 2,
+    "cooldownSec": 5.0,
+    "priority": 82
+  },
+  {
+    "id": "w2_superalloy",
+    "world": "w2_alliages_p4",
+    "difficulty": "hard",
+    "inputs": [
+      {
+        "Z": 28,
+        "sym": "Ni"
+      },
+      {
+        "Z": 24,
+        "sym": "Cr"
+      },
+      {
+        "Z": 27,
+        "sym": "Co"
+      },
+      {
+        "Z": 26,
+        "sym": "Fe"
+      }
+    ],
+    "cost": 40,
+    "effect": "conduct_chain",
+    "effectRadius": 3.0,
+    "refund": 6,
+    "cooldownSec": 7.0,
+    "priority": 92
+  },
+  {
+    "id": "w3_zr_nb",
+    "world": "w3_catalyse_p5",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 40,
+        "sym": "Zr"
+      },
+      {
+        "Z": 41,
+        "sym": "Nb"
+      }
+    ],
+    "cost": 18,
+    "effect": "shield_bubble",
+    "effectRadius": 2.4,
+    "refund": 2,
+    "cooldownSec": 3.0,
+    "priority": 70
+  },
+  {
+    "id": "w3_mo_tc",
+    "world": "w3_catalyse_p5",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 42,
+        "sym": "Mo"
+      },
+      {
+        "Z": 43,
+        "sym": "Tc"
+      }
+    ],
+    "cost": 18,
+    "effect": "catalyst_refill",
+    "effectRadius": 2.0,
+    "refund": 6,
+    "cooldownSec": 4.0,
+    "priority": 70
+  },
+  {
+    "id": "w3_ru_rh",
+    "world": "w3_catalyse_p5",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 44,
+        "sym": "Ru"
+      },
+      {
+        "Z": 45,
+        "sym": "Rh"
+      }
+    ],
+    "cost": 18,
+    "effect": "stabilize",
+    "effectRadius": 2.5,
+    "refund": 1,
+    "cooldownSec": 3.0,
+    "priority": 70
+  },
+  {
+    "id": "w3_tricat",
+    "world": "w3_catalyse_p5",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 44,
+        "sym": "Ru"
+      },
+      {
+        "Z": 45,
+        "sym": "Rh"
+      },
+      {
+        "Z": 46,
+        "sym": "Pd"
+      }
+    ],
+    "cost": 30,
+    "effect": "chain_spark_2",
+    "effectRadius": 2.9,
+    "refund": 4,
+    "cooldownSec": 5.0,
+    "priority": 82
+  },
+  {
+    "id": "w3_silver",
+    "world": "w3_catalyse_p5",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 47,
+        "sym": "Ag"
+      },
+      {
+        "Z": 47,
+        "sym": "Ag"
+      },
+      {
+        "Z": 50,
+        "sym": "Sn"
+      }
+    ],
+    "cost": 32,
+    "effect": "mirror_clear",
+    "effectRadius": 2.7,
+    "refund": 4,
+    "cooldownSec": 5.5,
+    "priority": 82
+  },
+  {
+    "id": "w3_xe_nova",
+    "world": "w3_catalyse_p5",
+    "difficulty": "hard",
+    "inputs": [
+      {
+        "Z": 54,
+        "sym": "Xe"
+      },
+      {
+        "Z": 53,
+        "sym": "I"
+      },
+      {
+        "Z": 47,
+        "sym": "Ag"
+      },
+      {
+        "Z": 46,
+        "sym": "Pd"
+      }
+    ],
+    "cost": 44,
+    "effect": "xenon_flash",
+    "effectRadius": 3.2,
+    "refund": 6,
+    "cooldownSec": 7.5,
+    "priority": 92
+  },
+  {
+    "id": "w4_cs_ba",
+    "world": "w4_terres_rares",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 55,
+        "sym": "Cs"
+      },
+      {
+        "Z": 56,
+        "sym": "Ba"
+      }
+    ],
+    "cost": 20,
+    "effect": "shockwave",
+    "effectRadius": 2.6,
+    "refund": 2,
+    "cooldownSec": 3.5,
+    "priority": 70
+  },
+  {
+    "id": "w4_nd_sm",
+    "world": "w4_terres_rares",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 60,
+        "sym": "Nd"
+      },
+      {
+        "Z": 62,
+        "sym": "Sm"
+      }
+    ],
+    "cost": 20,
+    "effect": "magnetic_pull",
+    "effectRadius": 3.2,
+    "refund": 0,
+    "cooldownSec": 4.0,
+    "priority": 70
+  },
+  {
+    "id": "w4_eu_gd",
+    "world": "w4_terres_rares",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 63,
+        "sym": "Eu"
+      },
+      {
+        "Z": 64,
+        "sym": "Gd"
+      }
+    ],
+    "cost": 20,
+    "effect": "glow_refill",
+    "effectRadius": 2.2,
+    "refund": 8,
+    "cooldownSec": 5.0,
+    "priority": 70
+  },
+  {
+    "id": "w4_glow_tri",
+    "world": "w4_terres_rares",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 62,
+        "sym": "Sm"
+      },
+      {
+        "Z": 63,
+        "sym": "Eu"
+      },
+      {
+        "Z": 64,
+        "sym": "Gd"
+      }
+    ],
+    "cost": 34,
+    "effect": "aura_shield",
+    "effectRadius": 3.0,
+    "refund": 4,
+    "cooldownSec": 6.0,
+    "priority": 82
+  },
+  {
+    "id": "w4_magnet_tri",
+    "world": "w4_terres_rares",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 60,
+        "sym": "Nd"
+      },
+      {
+        "Z": 65,
+        "sym": "Tb"
+      },
+      {
+        "Z": 66,
+        "sym": "Dy"
+      }
+    ],
+    "cost": 36,
+    "effect": "magnet_sweep",
+    "effectRadius": 3.4,
+    "refund": 2,
+    "cooldownSec": 6.5,
+    "priority": 82
+  },
+  {
+    "id": "w4_matrix",
+    "world": "w4_terres_rares",
+    "difficulty": "hard",
+    "inputs": [
+      {
+        "Z": 60,
+        "sym": "Nd"
+      },
+      {
+        "Z": 65,
+        "sym": "Tb"
+      },
+      {
+        "Z": 66,
+        "sym": "Dy"
+      },
+      {
+        "Z": 67,
+        "sym": "Ho"
+      }
+    ],
+    "cost": 48,
+    "effect": "field_compress",
+    "effectRadius": 3.6,
+    "refund": 6,
+    "cooldownSec": 8.0,
+    "priority": 92
+  },
+  {
+    "id": "w5_au_pt",
+    "world": "w5_lourds_p6",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 79,
+        "sym": "Au"
+      },
+      {
+        "Z": 78,
+        "sym": "Pt"
+      }
+    ],
+    "cost": 22,
+    "effect": "shield_heavy",
+    "effectRadius": 2.8,
+    "refund": 2,
+    "cooldownSec": 4.0,
+    "priority": 70
+  },
+  {
+    "id": "w5_hg_au",
+    "world": "w5_lourds_p6",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 80,
+        "sym": "Hg"
+      },
+      {
+        "Z": 79,
+        "sym": "Au"
+      }
+    ],
+    "cost": 22,
+    "effect": "liquid_drag",
+    "effectRadius": 2.8,
+    "refund": 0,
+    "cooldownSec": 4.0,
+    "priority": 70
+  },
+  {
+    "id": "w5_pb_tl",
+    "world": "w5_lourds_p6",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 82,
+        "sym": "Pb"
+      },
+      {
+        "Z": 81,
+        "sym": "Tl"
+      }
+    ],
+    "cost": 22,
+    "effect": "anchor",
+    "effectRadius": 2.6,
+    "refund": 0,
+    "cooldownSec": 4.0,
+    "priority": 70
+  },
+  {
+    "id": "w5_os_ir_pt",
+    "world": "w5_lourds_p6",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 76,
+        "sym": "Os"
+      },
+      {
+        "Z": 77,
+        "sym": "Ir"
+      },
+      {
+        "Z": 78,
+        "sym": "Pt"
+      }
+    ],
+    "cost": 38,
+    "effect": "anvil_pulse",
+    "effectRadius": 3.2,
+    "refund": 4,
+    "cooldownSec": 6.5,
+    "priority": 82
+  },
+  {
+    "id": "w5_au2_hg",
+    "world": "w5_lourds_p6",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 79,
+        "sym": "Au"
+      },
+      {
+        "Z": 79,
+        "sym": "Au"
+      },
+      {
+        "Z": 80,
+        "sym": "Hg"
+      }
+    ],
+    "cost": 40,
+    "effect": "gold_flash",
+    "effectRadius": 3.0,
+    "refund": 6,
+    "cooldownSec": 7.0,
+    "priority": 82
+  },
+  {
+    "id": "w5_rn_fog",
+    "world": "w5_lourds_p6",
+    "difficulty": "hard",
+    "inputs": [
+      {
+        "Z": 86,
+        "sym": "Rn"
+      },
+      {
+        "Z": 85,
+        "sym": "At"
+      },
+      {
+        "Z": 84,
+        "sym": "Po"
+      },
+      {
+        "Z": 82,
+        "sym": "Pb"
+      }
+    ],
+    "cost": 54,
+    "effect": "radon_fog",
+    "effectRadius": 3.8,
+    "refund": 6,
+    "cooldownSec": 9.0,
+    "priority": 92
+  },
+  {
+    "id": "w6_u_np",
+    "world": "w6_actinides",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 92,
+        "sym": "U"
+      },
+      {
+        "Z": 93,
+        "sym": "Np"
+      }
+    ],
+    "cost": 24,
+    "effect": "radiation_pulse",
+    "effectRadius": 3.0,
+    "refund": 2,
+    "cooldownSec": 4.0,
+    "priority": 70
+  },
+  {
+    "id": "w6_pu_am",
+    "world": "w6_actinides",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 94,
+        "sym": "Pu"
+      },
+      {
+        "Z": 95,
+        "sym": "Am"
+      }
+    ],
+    "cost": 24,
+    "effect": "burst_hot",
+    "effectRadius": 3.0,
+    "refund": 2,
+    "cooldownSec": 4.0,
+    "priority": 70
+  },
+  {
+    "id": "w6_th_pa",
+    "world": "w6_actinides",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 90,
+        "sym": "Th"
+      },
+      {
+        "Z": 91,
+        "sym": "Pa"
+      }
+    ],
+    "cost": 24,
+    "effect": "stabilize_strong",
+    "effectRadius": 2.8,
+    "refund": 2,
+    "cooldownSec": 4.0,
+    "priority": 70
+  },
+  {
+    "id": "w6_fission",
+    "world": "w6_actinides",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 92,
+        "sym": "U"
+      },
+      {
+        "Z": 92,
+        "sym": "U"
+      },
+      {
+        "Z": 94,
+        "sym": "Pu"
+      }
+    ],
+    "cost": 44,
+    "effect": "fission_clear",
+    "effectRadius": 3.6,
+    "refund": 6,
+    "cooldownSec": 7.0,
+    "priority": 82
+  },
+  {
+    "id": "w6_chain",
+    "world": "w6_actinides",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 93,
+        "sym": "Np"
+      },
+      {
+        "Z": 94,
+        "sym": "Pu"
+      },
+      {
+        "Z": 95,
+        "sym": "Am"
+      }
+    ],
+    "cost": 46,
+    "effect": "chain_react",
+    "effectRadius": 3.5,
+    "refund": 6,
+    "cooldownSec": 7.5,
+    "priority": 82
+  },
+  {
+    "id": "w6_core",
+    "world": "w6_actinides",
+    "difficulty": "hard",
+    "inputs": [
+      {
+        "Z": 92,
+        "sym": "U"
+      },
+      {
+        "Z": 94,
+        "sym": "Pu"
+      },
+      {
+        "Z": 95,
+        "sym": "Am"
+      },
+      {
+        "Z": 98,
+        "sym": "Cf"
+      }
+    ],
+    "cost": 60,
+    "effect": "core_meltdown",
+    "effectRadius": 4.2,
+    "refund": 10,
+    "cooldownSec": 10.0,
+    "priority": 92
+  },
+  {
+    "id": "w7_rf_db",
+    "world": "w7_superheavy",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 104,
+        "sym": "Rf"
+      },
+      {
+        "Z": 105,
+        "sym": "Db"
+      }
+    ],
+    "cost": 28,
+    "effect": "gravity_well",
+    "effectRadius": 3.4,
+    "refund": 2,
+    "cooldownSec": 4.5,
+    "priority": 70
+  },
+  {
+    "id": "w7_ds_rg",
+    "world": "w7_superheavy",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 110,
+        "sym": "Ds"
+      },
+      {
+        "Z": 111,
+        "sym": "Rg"
+      }
+    ],
+    "cost": 28,
+    "effect": "spark_storm",
+    "effectRadius": 3.2,
+    "refund": 2,
+    "cooldownSec": 4.5,
+    "priority": 70
+  },
+  {
+    "id": "w7_cn_nh",
+    "world": "w7_superheavy",
+    "difficulty": "easy",
+    "inputs": [
+      {
+        "Z": 112,
+        "sym": "Cn"
+      },
+      {
+        "Z": 113,
+        "sym": "Nh"
+      }
+    ],
+    "cost": 28,
+    "effect": "phase_shift",
+    "effectRadius": 3.0,
+    "refund": 2,
+    "cooldownSec": 4.5,
+    "priority": 70
+  },
+  {
+    "id": "w7_timewarp",
+    "world": "w7_superheavy",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 108,
+        "sym": "Hs"
+      },
+      {
+        "Z": 109,
+        "sym": "Mt"
+      },
+      {
+        "Z": 110,
+        "sym": "Ds"
+      }
+    ],
+    "cost": 52,
+    "effect": "time_warp",
+    "effectRadius": 3.8,
+    "refund": 6,
+    "cooldownSec": 8.0,
+    "priority": 82
+  },
+  {
+    "id": "w7_corrosion",
+    "world": "w7_superheavy",
+    "difficulty": "medium",
+    "inputs": [
+      {
+        "Z": 114,
+        "sym": "Fl"
+      },
+      {
+        "Z": 116,
+        "sym": "Lv"
+      },
+      {
+        "Z": 117,
+        "sym": "Ts"
+      }
+    ],
+    "cost": 56,
+    "effect": "corrosive_clear",
+    "effectRadius": 3.9,
+    "refund": 6,
+    "cooldownSec": 8.5,
+    "priority": 82
+  },
+  {
+    "id": "w7_og_end",
+    "world": "w7_superheavy",
+    "difficulty": "hard",
+    "inputs": [
+      {
+        "Z": 118,
+        "sym": "Og"
+      },
+      {
+        "Z": 118,
+        "sym": "Og"
+      },
+      {
+        "Z": 117,
+        "sym": "Ts"
+      },
+      {
+        "Z": 116,
+        "sym": "Lv"
+      }
+    ],
+    "cost": 74,
+    "effect": "exotic_reset",
+    "effectRadius": 4.6,
+    "refund": 12,
+    "cooldownSec": 12.0,
+    "priority": 92
+  }
+]

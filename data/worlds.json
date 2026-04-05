@@ -1,0 +1,275 @@
+[
+  {
+    "id": "w1_origines",
+    "label": "Origines",
+    "zMin": 1,
+    "zMax": 18,
+    "tiers": 18,
+    "spawnDeck": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "physics": {
+      "id": "phys_light",
+      "gravity": 20,
+      "restitution": 0.22,
+      "friction": 0.18,
+      "linearDamping": 0.02,
+      "angularDamping": 0.02
+    },
+    "energy": {
+      "maxEnergy": 90
+    },
+    "theme": {
+      "label": "Cyan-lab, bubbles",
+      "bgColor": "#040820",
+      "accentColor": "#00CCDD"
+    },
+    "molecules": [
+      "w1_oh",
+      "w1_no",
+      "w1_co",
+      "w1_h2o",
+      "w1_co2",
+      "w1_nh3"
+    ]
+  },
+  {
+    "id": "w2_alliages_p4",
+    "label": "Alliages P4",
+    "zMin": 19,
+    "zMax": 36,
+    "tiers": 18,
+    "spawnDeck": [
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "physics": {
+      "id": "phys_metal",
+      "gravity": 23,
+      "restitution": 0.14,
+      "friction": 0.24,
+      "linearDamping": 0.03,
+      "angularDamping": 0.03
+    },
+    "energy": {
+      "maxEnergy": 100
+    },
+    "theme": {
+      "label": "Steel, sparks",
+      "bgColor": "#0A0A14",
+      "accentColor": "#AABBCC"
+    },
+    "molecules": [
+      "w2_fe_co",
+      "w2_ti_v",
+      "w2_cr_mn",
+      "w2_stainless",
+      "w2_tri_alloy",
+      "w2_superalloy"
+    ]
+  },
+  {
+    "id": "w3_catalyse_p5",
+    "label": "Catalyse P5",
+    "zMin": 37,
+    "zMax": 54,
+    "tiers": 18,
+    "spawnDeck": [
+      37,
+      38,
+      39,
+      40,
+      41,
+      42
+    ],
+    "physics": {
+      "id": "phys_catalyst",
+      "gravity": 24,
+      "restitution": 0.13,
+      "friction": 0.26,
+      "linearDamping": 0.035,
+      "angularDamping": 0.035
+    },
+    "energy": {
+      "maxEnergy": 110
+    },
+    "theme": {
+      "label": "Indigo, noble glow",
+      "bgColor": "#0C0820",
+      "accentColor": "#6644CC"
+    },
+    "molecules": [
+      "w3_zr_nb",
+      "w3_mo_tc",
+      "w3_ru_rh",
+      "w3_tricat",
+      "w3_silver",
+      "w3_xe_nova"
+    ]
+  },
+  {
+    "id": "w4_terres_rares",
+    "label": "Terres Rares",
+    "zMin": 55,
+    "zMax": 72,
+    "tiers": 18,
+    "spawnDeck": [
+      55,
+      56,
+      57,
+      58,
+      59,
+      60
+    ],
+    "physics": {
+      "id": "phys_magnetic",
+      "gravity": 22,
+      "restitution": 0.15,
+      "friction": 0.28,
+      "linearDamping": 0.04,
+      "angularDamping": 0.04
+    },
+    "energy": {
+      "maxEnergy": 120
+    },
+    "theme": {
+      "label": "Green neon, magnetic",
+      "bgColor": "#041008",
+      "accentColor": "#44FF88"
+    },
+    "molecules": [
+      "w4_cs_ba",
+      "w4_nd_sm",
+      "w4_eu_gd",
+      "w4_glow_tri",
+      "w4_magnet_tri",
+      "w4_matrix"
+    ]
+  },
+  {
+    "id": "w5_lourds_p6",
+    "label": "Lourds P6",
+    "zMin": 73,
+    "zMax": 86,
+    "tiers": 14,
+    "spawnDeck": [
+      73,
+      74,
+      75,
+      76,
+      77,
+      78
+    ],
+    "physics": {
+      "id": "phys_heavy",
+      "gravity": 26,
+      "restitution": 0.1,
+      "friction": 0.32,
+      "linearDamping": 0.05,
+      "angularDamping": 0.05
+    },
+    "energy": {
+      "maxEnergy": 130
+    },
+    "theme": {
+      "label": "Gold/black, smoke",
+      "bgColor": "#0C0800",
+      "accentColor": "#FFD700"
+    },
+    "molecules": [
+      "w5_au_pt",
+      "w5_hg_au",
+      "w5_pb_tl",
+      "w5_os_ir_pt",
+      "w5_au2_hg",
+      "w5_rn_fog"
+    ]
+  },
+  {
+    "id": "w6_actinides",
+    "label": "Actinides",
+    "zMin": 87,
+    "zMax": 103,
+    "tiers": 17,
+    "spawnDeck": [
+      87,
+      88,
+      89,
+      90,
+      91,
+      92
+    ],
+    "physics": {
+      "id": "phys_unstable",
+      "gravity": 25,
+      "restitution": 0.18,
+      "friction": 0.2,
+      "linearDamping": 0.03,
+      "angularDamping": 0.03
+    },
+    "energy": {
+      "maxEnergy": 140
+    },
+    "theme": {
+      "label": "Blue electric",
+      "bgColor": "#040814",
+      "accentColor": "#2266FF"
+    },
+    "molecules": [
+      "w6_u_np",
+      "w6_pu_am",
+      "w6_th_pa",
+      "w6_fission",
+      "w6_chain",
+      "w6_core"
+    ]
+  },
+  {
+    "id": "w7_superheavy",
+    "label": "Superheavy",
+    "zMin": 104,
+    "zMax": 118,
+    "tiers": 15,
+    "spawnDeck": [
+      104,
+      105,
+      106,
+      107,
+      108,
+      109
+    ],
+    "physics": {
+      "id": "phys_exotic",
+      "gravity": 24,
+      "restitution": 0.2,
+      "friction": 0.22,
+      "linearDamping": 0.02,
+      "angularDamping": 0.02
+    },
+    "energy": {
+      "maxEnergy": 160
+    },
+    "theme": {
+      "label": "UV/glitch",
+      "bgColor": "#100420",
+      "accentColor": "#CC44FF"
+    },
+    "molecules": [
+      "w7_rf_db",
+      "w7_ds_rg",
+      "w7_cn_nh",
+      "w7_timewarp",
+      "w7_corrosion",
+      "w7_og_end"
+    ]
+  }
+]

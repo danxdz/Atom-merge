@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atom Merge</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;overflow:hidden;background:#06060f}
+
+    /* ── Ambient background blobs ── */
+    .bg-blob{
+      position:fixed;border-radius:50%;pointer-events:none;
+      filter:blur(100px);opacity:0.18;z-index:5;
+      will-change:transform;
+    }
+    .bg-blob:nth-child(1){width:45vw;height:45vw;background:#6644ff;top:-10%;left:-10%;animation:drift1 38s ease-in-out infinite alternate}
+    .bg-blob:nth-child(2){width:55vw;height:55vw;background:#22ddaa;bottom:-15%;right:-15%;animation:drift2 44s ease-in-out infinite alternate}
+    .bg-blob:nth-child(3){width:40vw;height:40vw;background:#ff4488;top:40%;left:50%;animation:drift3 50s ease-in-out infinite alternate}
+    .bg-blob:nth-child(4){width:50vw;height:50vw;background:#ffaa22;bottom:20%;left:-20%;animation:drift4 42s ease-in-out infinite alternate}
+    .bg-blob:nth-child(5){width:35vw;height:35vw;background:#4488ff;top:10%;right:10%;animation:drift5 46s ease-in-out infinite alternate}
+
+    @keyframes drift1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(12vw,15vh) scale(1.15)}}
+    @keyframes drift2{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-14vw,-12vh) scale(1.1)}}
+    @keyframes drift3{0%{transform:translate(0,0) scale(0.9)}100%{transform:translate(-10vw,18vh) scale(1.2)}}
+    @keyframes drift4{0%{transform:translate(0,0) scale(1.1)}100%{transform:translate(16vw,-10vh) scale(0.95)}}
+    @keyframes drift5{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-8vw,14vh) scale(1.12)}}
+    body{font-family:system-ui,-apple-system,sans-serif;color:#ddddf0}
+
+    /* ── Canvas ── */
+    #renderCanvas{width:100%;height:100%;display:block;touch-action:none;outline:none;position:relative;z-index:1;background:transparent}
+
+    /* ── Header bar ── */
+    #hud{
+      position:fixed;top:0;left:50%;transform:translateX(-50%);
+      display:flex;align-items:center;
+      padding:10px 18px;gap:14px;
+      background:rgba(10,10,25,0.92);
+      border-bottom:1px solid rgba(255,255,255,0.06);
+      border-radius:0 0 10px 10px;
+      pointer-events:none;z-index:10;
+      height:48px;
+      min-width:280px;
+    }
+    #hud>*{pointer-events:auto}
+    .hud-score{display:flex;align-items:center;gap:7px;white-space:nowrap}
+    .hud-score .icon{font-size:17px;opacity:0.8}
+    .hud-score .val{font-size:20px;font-weight:700}
+    .hud-best{font-size:12px;opacity:0.45;white-space:nowrap}
+    .hud-best .bv{font-weight:700;opacity:0.7}
+
+    #hud-energy{display:flex;align-items:center;gap:10px;margin-left:auto;flex:1 1 auto;justify-content:flex-end}
+    #etrk{flex:1;max-width:300px;min-width:60px;height:10px;background:rgba(255,255,255,0.08);border-radius:5px;overflow:hidden}
+    #energy-fill{height:100%;width:100%;background:linear-gradient(90deg,#f5a623,#f7c948);border-radius:5px;transition:width .3s}
+    #hud-energy .e-icon{font-size:17px}
+    #hud-energy .e-val{font-size:15px;font-weight:700;color:#f7c948;min-width:28px}
+
+    /* ── Config toggle (in header) ── */
+    #cfg-toggle{
+      background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+      border-radius:6px;color:#b0b0cc;font-size:13px;
+      width:30px;height:30px;display:flex;align-items:center;justify-content:center;
+      cursor:pointer;margin-left:6px;pointer-events:auto;flex-shrink:0;
+    }
+    #cfg-toggle:hover{background:rgba(255,255,255,0.12)}
+
+    /* ── Config panel ── */
+    #cfg{
+      position:fixed;right:0;top:48px;bottom:0;width:156px;
+      background:rgba(6,6,15,0.93);
+      border-left:1px solid rgba(255,255,255,0.06);
+      padding:14px 10px;font-size:11px;z-index:20;overflow-y:auto;
+      transition:transform .25s ease;
+    }
+    #cfg.hidden{transform:translateX(100%)}
+    .ct{font-size:9px;text-transform:uppercase;letter-spacing:1.4px;opacity:0.38;margin-bottom:10px}
+    .cr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .cr span{opacity:0.65}
+    .cr small{opacity:0.4;min-width:28px;text-align:right;font-size:10px}
+    .cr input[type=range]{width:58px;accent-color:#4488ff}
+    .cr select{
+      background:#10102a;color:#b0b0cc;border:1px solid rgba(255,255,255,0.1);
+      padding:3px;font-size:10px;border-radius:3px;width:76px;
+    }
+
+    /* ── Game Over ── */
+    #game-over{
+      position:fixed;inset:0;display:none;flex-direction:column;
+      align-items:center;justify-content:center;
+      background:rgba(6,6,15,0.88);z-index:50;gap:12px;
+    }
+    #game-over h1{font-size:34px;color:#ff5533}
+    #game-over p{font-size:18px;opacity:0.75}
+    #rbtn{
+      margin-top:6px;padding:10px 26px;background:#3355ee;border:none;
+      border-radius:6px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;
+    }
+    #rbtn:hover{background:#4466ff}
+
+    /* ── Debug ── */
+    #atom-count{position:fixed;bottom:10px;right:166px;font-size:9px;opacity:0.25;z-index:10;pointer-events:none}
+  </style>
+</head>
+<body>
+  <div class="bg-blob"></div>
+  <div class="bg-blob"></div>
+  <div class="bg-blob"></div>
+  <div class="bg-blob"></div>
+  <div class="bg-blob"></div>
+  <canvas id="renderCanvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-score"><span class="icon">🏆</span><span class="val" id="score-val">0</span></div>
+    <div class="hud-best">BEST <span class="bv" id="best-val">0</span></div>
+    <div class="hud-world" id="hud-world" style="font-size:11px;opacity:0.55;white-space:nowrap;cursor:pointer" onclick="toggleCfg()" title="Click to change world">🌍 W1</div>
+    <button id="cfg-toggle" onclick="toggleCfg()">⚙</button>
+    <div id="hud-energy">
+      <div id="etrk"><div id="energy-fill"></div></div>
+      <span class="e-icon">⚡</span><span class="e-val" id="energy-val">45</span>
+      <span id="combo-display" style="font-size:11px;font-weight:700;color:#ff9900;opacity:0;transition:opacity .3s;margin-left:4px"></span>
+    </div>
+  </div>
+
+  <!-- Config panel -->
+  <div id="cfg">
+    <div class="ct">⚙ Physics Preset</div>
+    <div class="cr">
+      <span>Gravity</span>
+      <input type="range" id="cfg-gravity" min="2" max="25" step="0.5" value="9.81" oninput="updatePhysicsFromUI()">
+      <small id="v-gravity">9.8</small>
+    </div>
+    <div class="cr">
+      <span>Bounce</span>
+      <input type="range" id="cfg-restitution" min="0" max="0.9" step="0.01" value="0.15" oninput="updatePhysicsFromUI()">
+      <small id="v-restitution">0.15</small>
+    </div>
+    <div class="cr">
+      <span>Friction</span>
+      <input type="range" id="cfg-friction" min="0" max="1" step="0.05" value="0.5" oninput="updatePhysicsFromUI()">
+      <small id="v-friction">0.50</small>
+    </div>
+
+    <div class="ct" style="margin-top:14px">⚛ World</div>
+    <div class="cr">
+      <span>World</span>
+      <select id="cfg-world" onchange="setWorldFromUI(this.value)">
+        <!-- populated dynamically -->
+      </select>
+    </div>
+
+    <div class="ct" style="margin-top:14px">⚛ Elements</div>
+    <div id="legend"></div>
+  </div>
+
+  <!-- Game Over -->
+  <div id="game-over">
+    <h1>⚠ Overflow!</h1>
+    <p id="final-score">Score: 0</p>
+    <button id="rbtn" onclick="restartGame()">Play Again</button>
+  </div>
+
+  <div id="atom-count">atoms: 0</div>
+
+  <script>
+    function toggleCfg(){
+      document.getElementById('cfg').classList.toggle('hidden');
+    }
+  </script>
+
+  <!-- CDN deps (CSP-safe) -->
+  <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/babylonjs@5/babylon.js"></script>
+  <!-- Game -->
+  <script src="./config.js"></script>
+  <script src="./molecules.js"></script>
+  <script src="./game.js"></script>
+</body>
+</html>
