@@ -406,7 +406,7 @@ function removeAtom(atom) {
 function queuePos(qi, diam) {
   var edge = (CONTAINER.w / 2) - 0.8;  // positive X = screen RIGHT (camera at +Z)
   var spacing = 1.1;
-  var yBottom = GAME_RULES.dropY + 0.3;  // bottom-align: all balls sit on this line
+  var yBottom = CONTAINER.h + 1.2;  // above box top, centered between header and play area
   var r = (diam || 1.0) / 2;
   // qi=0 (next/biggest) innermost over play area, qi=2 (smallest) at box edge
   return new BABYLON.Vector3(edge - (2 - qi) * spacing, yBottom + r, 2.0);
