@@ -443,76 +443,14 @@ function updateQueuePreview() {
 
 /* Animated queue transition: sweep first to drop zone, shift others left, new from behind */
 function animateQueueDrop(targetX, callback) {
-  var sweepBall = queueMeshes[0];
-  var shiftBall1 = queueMeshes[1];
-  var shiftBall2 = queueMeshes[2];
-  queueMeshes[0] = null; queueMeshes[1] = null; queueMeshes[2] = null;
-
-  var duration = 600;
-  var startTime = performance.now();
-
-  // Capture start positions
-  var sweepStart = sweepBall ? sweepBall.position.clone() : null;
-  var sweepEnd = new BABYLON.Vector3(targetX, GAME_RULES.dropY, 0);
-  var shift1Start = shiftBall1 ? shiftBall1.position.clone() : null;
-  var shift1End = queuePos(0); // slot 1 moves to slot 0 (leftmost)
-  var shift2Start = shiftBall2 ? shiftBall2.position.clone() : null;
-  var shift2End = queuePos(1); // slot 2 moves to slot 1
-
-  // New ball flies in from behind (z = -10) — dropQueue[3] is the newest after advance
-  var newElem = ELEMENT_DB[dropQueue[3]];
-  var newDiam = Math.min(newElem.r * 2 * 0.6, 1.5);
-  var newBall = BABYLON.MeshBuilder.CreateSphere('q3d_new', { diameter: newDiam, segments: 16 }, scene);
-  var newEnd = queuePos(2);
-  newBall.position = new BABYLON.Vector3(newEnd.x, newEnd.y, -10); // start behind screen
-  var newMat = new BABYLON.StandardMaterial('qm_new', scene);
-  newMat.diffuseTexture = elemTexture(newElem);
-  newMat.emissiveColor = hex3(newElem.col).scale(0.3);
-  newMat.alpha = 1.0;
-  newBall.material = newMat;
-  newBall.isPickable = false;
-
-  var obs = scene.onBeforeRenderObservable.add(function() {
-    var t = Math.min((performance.now() - startTime) / duration, 1);
-    var e = 1 - (1 - t) * (1 - t); // ease-out quad
-
-    // Sweep first ball to drop zone
-    if (sweepBall) {
-      sweepBall.position = BABYLON.Vector3.Lerp(sweepStart, sweepEnd, e);
-      sweepBall.material.alpha = 1.0;
-    }
-    // Shift ball 1 → slot 0
-    if (shiftBall1) {
-      shiftBall1.position = BABYLON.Vector3.Lerp(shift1Start, shift1End, e);
-      shiftBall1.material.alpha = 1.0;
-      var s1 = 0.6 + 0.4 * e; // scale up from 0.6 → 1.0
-      shiftBall1.scaling.setAll(s1);
-    }
-    // Shift ball 2 → slot 1
-    if (shiftBall2) {
-      shiftBall2.position = BABYLON.Vector3.Lerp(shift2Start, shift2End, e);
-      shiftBall2.material.alpha = 1.0;
-      var s2 = 0.6 + 0.0 * e; // stay 0.6 scale
-      shiftBall2.scaling.setAll(s2);
-    }
-    // New ball flies in from behind
-    newBall.position.z = -10 + (newEnd.z + 10) * e; // -10 → newEnd.z (2.0)
-    newMat.alpha = 1.0;
-    var sn = 0.3 + 0.3 * e; // grow from 0.3 → 0.6
-    newBall.scaling.setAll(sn);
-
-    if (t >= 1) {
-      scene.onBeforeRenderObservable.remove(obs);
-      if (sweepBall) sweepBall.dispose();
-      // Clean up shifted balls
-      if (shiftBall1) shiftBall1.dispose();
-      if (shiftBall2) shiftBall2.dispose();
-      newBall.dispose();
-      // Rebuild clean queue meshes
-      updateQueuePreview();
-      if (callback) callback();
-    }
-  });
+  // Dispose old queue meshes immediately
+  for (var i = 0; i < queueMeshes.length; i++) {
+    if (queueMeshes[i]) queueMeshes[i].dispose();
+    queueMeshes[i] = null;
+  }
+  // Rebuild queue instantly — no sweep animation
+  updateQueuePreview();
+  if (callback) callback();
 }
 
 /* ── Drop ───────────────────────────────────────────────────── */
@@ -522,7 +460,7 @@ function dropAtom(wx) {
   wx = Math.max(-maxX, Math.min(maxX, wx));
 
   canDrop = false;
-  spawnAtom(dropQueue[0], wx, GAME_RULES.dropY, 0);
+  spawnAtom(dropQueue[0], wx, GAME_RULES.dropY, 0, true); // skipAnim — just drop
   sessionStats.dropsCount++;
 
   // Hide ghost — the sweep animation replaces it
