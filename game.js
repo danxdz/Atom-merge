@@ -415,12 +415,13 @@ function queuePos(qi) {
 // maps to dropQueue[qi+1] since dropQueue[0] is the active drop ball
 function makeQueueBall(qi) {
   var elem = ELEMENT_DB[dropQueue[qi + 1]];
-  var scale = qi === 0 ? 0.6 : (qi === 1 ? 0.45 : 0.3);  // smaller queue balls
+  var scale = qi === 0 ? 1.0 : (qi === 1 ? 0.75 : 0.5);  // next=full, 2nd=3/4, 3rd=half
   var diam = elem.r * 2 * scale;
-  if (diam > 1.4) diam = 1.4;
+  if (qi > 0 && diam > 1.4) diam = 1.4;  // cap only preview balls, not next-drop
 
   var sp = BABYLON.MeshBuilder.CreateSphere('q3d_' + qi,
     { diameter: diam, segments: 16 }, scene);
+  sp._queueDiam = diam;  // store for sweep scaling
   sp.position = queuePos(qi);
 
   var mat = new BABYLON.StandardMaterial('qm_' + qi, scene);
@@ -468,11 +469,12 @@ function animateQueueDrop(targetX, callback) {
     var t = Math.min(frame / frames, 1);
     var ease = t * (2 - t); // ease-out quad
 
-    // Sweep ball 0 down to drop zone
+    // Sweep ball 0 down to drop zone — scale UP to real size
     if (sweeper) {
-      BABYLON.Vector3.LerpToRef(sweeper._sweepStart || sweeper.position.clone(), dropTarget, ease, sweeper.position);
       if (!sweeper._sweepStart) sweeper._sweepStart = sweeper.position.clone();
-      sweeper.scaling.setAll(1 - ease * 0.3); // shrink slightly as it arrives
+      BABYLON.Vector3.LerpToRef(sweeper._sweepStart, dropTarget, ease, sweeper.position);
+      // Already real size (qi=0 is 1.0 scale, no cap) — just keep it
+
     }
 
     // Slide remaining balls inward
