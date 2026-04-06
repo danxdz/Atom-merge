@@ -13,7 +13,7 @@
         "sym": "H"
       }
     ],
-    "cost": 14,
+    "cost": 30,
     "effect": "chain_spark",
     "effectRadius": 2.2,
     "refund": 2,
@@ -34,7 +34,7 @@
         "sym": "O"
       }
     ],
-    "cost": 14,
+    "cost": 30,
     "effect": "stabilize_soft",
     "effectRadius": 2.2,
     "refund": 1,
@@ -55,7 +55,7 @@
         "sym": "O"
       }
     ],
-    "cost": 16,
+    "cost": 30,
     "effect": "compress",
     "effectRadius": 2.4,
     "refund": 2,
@@ -80,7 +80,7 @@
         "sym": "O"
       }
     ],
-    "cost": 28,
+    "cost": 16,
     "effect": "splash_clear",
     "effectRadius": 2.6,
     "refund": 4,
@@ -105,7 +105,7 @@
         "sym": "O"
       }
     ],
-    "cost": 26,
+    "cost": 16,
     "effect": "smoke_slow",
     "effectRadius": 2.8,
     "refund": 2,
@@ -134,7 +134,7 @@
         "sym": "H"
       }
     ],
-    "cost": 34,
+    "cost": 5,
     "effect": "fog_repulse",
     "effectRadius": 2.8,
     "refund": 0,
@@ -155,7 +155,7 @@
         "sym": "Co"
       }
     ],
-    "cost": 16,
+    "cost": 32,
     "effect": "harden",
     "effectRadius": 2.3,
     "refund": 1,
@@ -176,7 +176,7 @@
         "sym": "V"
       }
     ],
-    "cost": 16,
+    "cost": 32,
     "effect": "lift",
     "effectRadius": 2.4,
     "refund": 1,
@@ -197,7 +197,7 @@
         "sym": "Mn"
       }
     ],
-    "cost": 18,
+    "cost": 32,
     "effect": "burst",
     "effectRadius": 2.4,
     "refund": 2,
@@ -222,7 +222,7 @@
         "sym": "Ni"
       }
     ],
-    "cost": 28,
+    "cost": 18,
     "effect": "shield",
     "effectRadius": 2.7,
     "refund": 3,
@@ -247,7 +247,7 @@
         "sym": "V"
       }
     ],
-    "cost": 30,
+    "cost": 18,
     "effect": "shear_wave",
     "effectRadius": 2.9,
     "refund": 2,
@@ -276,7 +276,7 @@
         "sym": "Fe"
       }
     ],
-    "cost": 40,
+    "cost": 6,
     "effect": "conduct_chain",
     "effectRadius": 3.0,
     "refund": 6,
@@ -297,7 +297,7 @@
         "sym": "Nb"
       }
     ],
-    "cost": 18,
+    "cost": 34,
     "effect": "shield_bubble",
     "effectRadius": 2.4,
     "refund": 2,
@@ -318,7 +318,7 @@
         "sym": "Tc"
       }
     ],
-    "cost": 18,
+    "cost": 34,
     "effect": "catalyst_refill",
     "effectRadius": 2.0,
     "refund": 6,
@@ -339,7 +339,7 @@
         "sym": "Rh"
       }
     ],
-    "cost": 18,
+    "cost": 34,
     "effect": "stabilize",
     "effectRadius": 2.5,
     "refund": 1,
@@ -364,7 +364,7 @@
         "sym": "Pd"
       }
     ],
-    "cost": 30,
+    "cost": 18,
     "effect": "chain_spark_2",
     "effectRadius": 2.9,
     "refund": 4,
@@ -389,7 +389,7 @@
         "sym": "Sn"
       }
     ],
-    "cost": 32,
+    "cost": 18,
     "effect": "mirror_clear",
     "effectRadius": 2.7,
     "refund": 4,
@@ -418,7 +418,7 @@
         "sym": "Pd"
       }
     ],
-    "cost": 44,
+    "cost": 6,
     "effect": "xenon_flash",
     "effectRadius": 3.2,
     "refund": 6,
@@ -439,7 +439,7 @@
         "sym": "Ba"
       }
     ],
-    "cost": 20,
+    "cost": 36,
     "effect": "shockwave",
     "effectRadius": 2.6,
     "refund": 2,
@@ -460,7 +460,7 @@
         "sym": "Sm"
       }
     ],
-    "cost": 20,
+    "cost": 36,
     "effect": "magnetic_pull",
     "effectRadius": 3.2,
     "refund": 0,
@@ -481,7 +481,7 @@
         "sym": "Gd"
       }
     ],
-    "cost": 20,
+    "cost": 36,
     "effect": "glow_refill",
     "effectRadius": 2.2,
     "refund": 8,
@@ -506,7 +506,7 @@
         "sym": "Gd"
       }
     ],
-    "cost": 34,
+    "cost": 20,
     "effect": "aura_shield",
     "effectRadius": 3.0,
     "refund": 4,
@@ -531,7 +531,7 @@
         "sym": "Dy"
       }
     ],
-    "cost": 36,
+    "cost": 20,
     "effect": "magnet_sweep",
     "effectRadius": 3.4,
     "refund": 2,
@@ -560,7 +560,7 @@
         "sym": "Ho"
       }
     ],
-    "cost": 48,
+    "cost": 7,
     "effect": "field_compress",
     "effectRadius": 3.6,
     "refund": 6,
@@ -581,7 +581,7 @@
         "sym": "Pt"
       }
     ],
-    "cost": 22,
+    "cost": 38,
     "effect": "shield_heavy",
     "effectRadius": 2.8,
     "refund": 2,
@@ -602,7 +602,7 @@
         "sym": "Au"
       }
     ],
-    "cost": 22,
+    "cost": 38,
     "effect": "liquid_drag",
     "effectRadius": 2.8,
     "refund": 0,
@@ -623,7 +623,7 @@
         "sym": "Tl"
       }
     ],
-    "cost": 22,
+    "cost": 38,
     "effect": "anchor",
     "effectRadius": 2.6,
     "refund": 0,
@@ -648,7 +648,7 @@
         "sym": "Pt"
       }
     ],
-    "cost": 38,
+    "cost": 22,
     "effect": "anvil_pulse",
     "effectRadius": 3.2,
     "refund": 4,
@@ -673,7 +673,7 @@
         "sym": "Hg"
       }
     ],
-    "cost": 40,
+    "cost": 22,
     "effect": "gold_flash",
     "effectRadius": 3.0,
     "refund": 6,
@@ -702,7 +702,7 @@
         "sym": "Pb"
       }
     ],
-    "cost": 54,
+    "cost": 8,
     "effect": "radon_fog",
     "effectRadius": 3.8,
     "refund": 6,
@@ -723,7 +723,7 @@
         "sym": "Np"
       }
     ],
-    "cost": 24,
+    "cost": 40,
     "effect": "radiation_pulse",
     "effectRadius": 3.0,
     "refund": 2,
@@ -744,7 +744,7 @@
         "sym": "Am"
       }
     ],
-    "cost": 24,
+    "cost": 40,
     "effect": "burst_hot",
     "effectRadius": 3.0,
     "refund": 2,
@@ -765,7 +765,7 @@
         "sym": "Pa"
       }
     ],
-    "cost": 24,
+    "cost": 40,
     "effect": "stabilize_strong",
     "effectRadius": 2.8,
     "refund": 2,
@@ -790,7 +790,7 @@
         "sym": "Pu"
       }
     ],
-    "cost": 44,
+    "cost": 24,
     "effect": "fission_clear",
     "effectRadius": 3.6,
     "refund": 6,
@@ -815,7 +815,7 @@
         "sym": "Am"
       }
     ],
-    "cost": 46,
+    "cost": 24,
     "effect": "chain_react",
     "effectRadius": 3.5,
     "refund": 6,
@@ -844,7 +844,7 @@
         "sym": "Cf"
       }
     ],
-    "cost": 60,
+    "cost": 8,
     "effect": "core_meltdown",
     "effectRadius": 4.2,
     "refund": 10,
@@ -865,7 +865,7 @@
         "sym": "Db"
       }
     ],
-    "cost": 28,
+    "cost": 44,
     "effect": "gravity_well",
     "effectRadius": 3.4,
     "refund": 2,
@@ -886,7 +886,7 @@
         "sym": "Rg"
       }
     ],
-    "cost": 28,
+    "cost": 44,
     "effect": "spark_storm",
     "effectRadius": 3.2,
     "refund": 2,
@@ -907,7 +907,7 @@
         "sym": "Nh"
       }
     ],
-    "cost": 28,
+    "cost": 44,
     "effect": "phase_shift",
     "effectRadius": 3.0,
     "refund": 2,
@@ -932,7 +932,7 @@
         "sym": "Ds"
       }
     ],
-    "cost": 52,
+    "cost": 28,
     "effect": "time_warp",
     "effectRadius": 3.8,
     "refund": 6,
@@ -957,7 +957,7 @@
         "sym": "Ts"
       }
     ],
-    "cost": 56,
+    "cost": 28,
     "effect": "corrosive_clear",
     "effectRadius": 3.9,
     "refund": 6,
@@ -986,7 +986,7 @@
         "sym": "Lv"
       }
     ],
-    "cost": 74,
+    "cost": 10,
     "effect": "exotic_reset",
     "effectRadius": 4.6,
     "refund": 12,
