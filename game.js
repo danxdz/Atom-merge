@@ -46,11 +46,12 @@ function getDropCost() {
   return Math.floor(currentLevel / 2) + 1;
 }
 
-/* Returns recipe IDs active at current level (0..currentLevel) */
+/* Returns recipe IDs active at current level — ONLY the current target recipe.
+   One recipe at a time prevents earlier recipes from stealing atoms needed for later ones. */
 function getActiveRecipeIds() {
   var w = WORLDS_DATA[worldIdx];
-  if (!w || !w.molecules) return [];
-  return w.molecules.slice(0, currentLevel + 1);
+  if (!w || !w.molecules || currentLevel >= w.molecules.length) return [];
+  return [w.molecules[currentLevel]];
 }
 
 /* Returns the target recipe ID for the current level */
