@@ -100,7 +100,8 @@ function findRecipeMatch(recipe, hash) {
     var z = recipe.inputs[i].Z;
     required[z] = (required[z] || 0) + 1;
   }
-  var detectR = (recipe.effectRadius || 3.0) * 1.2;
+  // Touch tolerance: atoms must be nearly touching (sum of radii + small gap)
+  var TOUCH_TOLERANCE = 0.35;
 
   for (var ai = 0; ai < atoms.length; ai++) {
     var seed = atoms[ai];
@@ -111,6 +112,7 @@ function findRecipeMatch(recipe, hash) {
     if (!required[seedZ]) continue;
 
     var pos = seed.mesh.getAbsolutePosition();
+    var seedR = seed.r || ELEMENT_DB[seed.tier].r || 0.5;
     var neighbors = getNeighbors(hash, pos.x, pos.y);
 
     var found = {};
@@ -124,8 +126,10 @@ function findRecipeMatch(recipe, hash) {
       var nZ = ELEMENT_DB[n.tier].Z;
       if (!required[nZ]) continue;
 
+      var nR = n.r || ELEMENT_DB[n.tier].r || 0.5;
+      var touchDist = seedR + nR + TOUCH_TOLERANCE;
       var dist = BABYLON.Vector3.Distance(pos, n.mesh.getAbsolutePosition());
-      if (dist > detectR) continue;
+      if (dist > touchDist) continue;
 
       // Low velocity check
       var vel = n.mesh.physicsImpostor ? n.mesh.physicsImpostor.getLinearVelocity() : null;
