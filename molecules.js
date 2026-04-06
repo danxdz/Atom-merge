@@ -191,6 +191,21 @@ function triggerMolecule(recipe, matchedAtoms) {
         try { removeAtom(matchedAtoms[i]); } catch(e) {}
       }
 
+      // Spawn byproduct atoms — keeps board populated
+      // inputs=2 → 1 byproduct, inputs=3 → 2, inputs=4 → 3 (net always -1)
+      var numByproducts = Math.max(1, matchedAtoms.length - 1);
+      for (var bp = 0; bp < numByproducts; bp++) {
+        try {
+          // Pick random tier from spawn deck (small atoms)
+          var deck = currentWorld.spawnDeck || [];
+          var bpTier = deck.length > 0 ? deck[Math.floor(Math.random() * deck.length)] : 1;
+          // Spawn near molecule center with slight random offset
+          var ox = (Math.random() - 0.5) * 1.5;
+          var oy = Math.random() * 0.5 + 0.3; // slightly above center
+          spawnAtom(bpTier, center.x + ox, center.y + oy, true);
+        } catch(e) {}
+      }
+
       // Apply gameplay effect
       applyMoleculeGameplay(recipe, center);
 
@@ -250,11 +265,7 @@ function moleculeVFX(recipe, center, matchedAtoms) {
   var rad = recipe.effectRadius || 2.5;
   var color = ELEMENT_DB[matchedAtoms[0].tier].col;
 
-  // Flash glow
-  if (glowLayer) {
-    glowLayer.intensity = 2.5;
-    setTimeout(function() { if (glowLayer) glowLayer.intensity = 0.45; }, 300);
-  }
+  // No full-screen flash — only local particle VFX
 
   // Category-based VFX
   if (eff.indexOf('spark') >= 0 || eff.indexOf('chain') >= 0 || eff.indexOf('burst') >= 0 ||
