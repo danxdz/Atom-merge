@@ -137,6 +137,7 @@
       <div id="etrk"><div id="energy-fill"></div></div>
       <span class="e-icon">⚡</span><span class="e-val" id="energy-val">45</span>
       <span id="combo-display" style="font-size:11px;font-weight:700;color:#ff9900;opacity:0;transition:opacity .3s;margin-left:4px"></span>
+      <span id="drop-cost" style="font-size:10px;opacity:0.45;margin-left:4px;white-space:nowrap">-1⚡</span>
     </div>
   </div>
 
@@ -169,6 +170,28 @@
 
     <div class="ct" style="margin-top:14px">⚛ Elements</div>
     <div id="legend"></div>
+  </div>
+
+  <!-- Level-up Toast -->
+  <div id="level-toast" style="position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);z-index:80;
+    background:linear-gradient(135deg,rgba(102,126,234,0.9),rgba(118,75,162,0.9));color:#fff;
+    padding:8px 20px;border-radius:20px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;
+    opacity:0;transition:opacity 0.4s,transform 0.4s;pointer-events:none;
+    box-shadow:0 4px 20px rgba(102,126,234,0.4);white-space:nowrap"></div>
+
+  <!-- World Complete -->
+  <div id="world-complete" style="display:none;position:fixed;inset:0;z-index:100;
+    background:rgba(0,0,20,0.88);align-items:center;justify-content:center;font-family:Inter,sans-serif">
+    <div style="text-align:center;color:#fff;max-width:340px;padding:32px">
+      <div style="font-size:56px;margin-bottom:12px">🎉</div>
+      <div id="wc-title" style="font-size:26px;font-weight:800;margin-bottom:8px;
+        background:linear-gradient(135deg,#667eea,#f093fb);-webkit-background-clip:text;-webkit-text-fill-color:transparent">World Complete!</div>
+      <div id="wc-score" style="font-size:16px;opacity:0.6;margin-bottom:28px">Score: 0</div>
+      <button id="wc-continue" style="padding:14px 32px;font-size:16px;font-weight:700;
+        background:linear-gradient(135deg,#667eea,#764ba2);border:none;color:#fff;border-radius:14px;
+        cursor:pointer;box-shadow:0 6px 24px rgba(102,126,234,0.5);transition:transform 0.15s;
+        letter-spacing:0.5px" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">Continue →</button>
+    </div>
   </div>
 
   <!-- Game Over -->

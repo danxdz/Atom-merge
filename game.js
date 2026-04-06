@@ -17,6 +17,7 @@ var ghostMesh   = null;
 var ghostX      = 0;
 var dangerStart = 0;
 var merging     = false;
+var currentLevel = 0;   // highest tier reached in current world (0-indexed)
 var texCache    = {};
 var matCache    = {};
 var atomIdSeq   = 0;
@@ -31,16 +32,26 @@ function hex3(hex) {
   );
 }
 function world()       { return WORLDS[worldIdx]; }
-function randDrop() {
+function getActiveSpawnDeck() {
   var w = WORLDS_DATA[worldIdx];
-  if (w && w.spawnDeck && w.spawnDeck.length > 0) {
-    var z = w.spawnDeck[Math.floor(Math.random() * w.spawnDeck.length)];
-    for (var i = 0; i < ELEMENT_DB.length; i++) {
-      if (ELEMENT_DB[i].Z === z) return i;
-    }
-    return Math.floor(Math.random() * Math.min(6, ELEMENT_DB.length));
+  if (!w || !w.spawnDeck || w.spawnDeck.length === 0) return [0];
+  var baseDeck = w.spawnDeck.slice();
+  var tiersToRemove = Math.floor(currentLevel / 4); // every 4 levels, trim 1 bottom tier
+  tiersToRemove = Math.min(tiersToRemove, baseDeck.length - 1); // always keep at least 1
+  return baseDeck.slice(tiersToRemove);
+}
+
+function getDropCost() {
+  return Math.floor(currentLevel / 4) + 1;
+}
+
+function randDrop() {
+  var deck = getActiveSpawnDeck();
+  var z = deck[Math.floor(Math.random() * deck.length)];
+  for (var i = 0; i < ELEMENT_DB.length; i++) {
+    if (ELEMENT_DB[i].Z === z) return i;
   }
-  return Math.floor(Math.random() * (world().dropMaxTier + 1));
+  return Math.floor(Math.random() * Math.min(6, ELEMENT_DB.length));
 }
 function initQueue()   { dropQueue = []; for (var i = 0; i < 4; i++) dropQueue.push(randDrop()); }
 function advanceQueue(){ dropQueue.shift(); dropQueue.push(randDrop()); }
@@ -52,6 +63,7 @@ function saveGame() {
   if (gameIsOver) return;
   var state = {
     worldIdx: worldIdx,
+    currentLevel: currentLevel,
     score: score,
     bestScore: bestScore,
     energy: energy,
@@ -73,6 +85,7 @@ function loadGame() {
       worldIdx = s.worldIdx;
       applyWorld(worldIdx);
     }
+    if (s.currentLevel !== undefined) currentLevel = s.currentLevel;
 
     score = s.score || 0;
     bestScore = s.bestScore || 0;
@@ -503,6 +516,11 @@ function dropAtom(wx) {
   wx = Math.max(-maxX, Math.min(maxX, wx));
 
   canDrop = false;
+
+  // Energy cost per drop — scales with level
+  var dropCost = getDropCost();
+  energy = Math.max(0, energy - dropCost);
+
   spawnAtom(dropQueue[0], wx, GAME_RULES.dropY, 0, true); // skipAnim — just drop
   sessionStats.dropsCount++;
 
@@ -535,6 +553,82 @@ function updateGhost() {
   ghostMesh.material = gm;
   ghostMesh.isPickable = false;
 
+}
+
+/* ── Level / World Progression ──────────────────────────────── */
+function showLevelUpToast(level) {
+  var el = document.getElementById('level-toast');
+  if (!el) return;
+  var deck = getActiveSpawnDeck();
+  var dropCost = getDropCost();
+  el.innerHTML = '⬆ Level ' + (level + 1) + ' <span style="opacity:0.6;font-size:12px">Drop: -' + dropCost + '⚡</span>';
+  el.style.opacity = '1';
+  el.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(function() {
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(-50%) translateY(-20px)';
+  }, 1800);
+}
+
+function showWorldComplete() {
+  canDrop = false;
+  var popup = document.getElementById('world-complete');
+  if (!popup) return;
+  var wName = WORLDS_DATA[worldIdx] ? WORLDS_DATA[worldIdx].label : 'World ' + (worldIdx + 1);
+  document.getElementById('wc-title').textContent = wName + ' Complete!';
+  document.getElementById('wc-score').textContent = 'Score: ' + score;
+  var nextIdx = worldIdx + 1;
+  var btn = document.getElementById('wc-continue');
+  if (nextIdx >= WORLDS_DATA.length) {
+    btn.textContent = '🏆 All Worlds Complete!';
+    btn.onclick = function() { popup.style.display = 'none'; canDrop = true; };
+  } else {
+    var nextName = WORLDS_DATA[nextIdx] ? WORLDS_DATA[nextIdx].label : 'World ' + (nextIdx + 1);
+    btn.textContent = 'Continue → ' + nextName;
+    btn.onclick = function() { continueToNextWorld(); };
+  }
+  popup.style.display = 'flex';
+}
+
+function continueToNextWorld() {
+  var popup = document.getElementById('world-complete');
+  if (popup) popup.style.display = 'none';
+  var nextIdx = worldIdx + 1;
+  if (nextIdx >= WORLDS_DATA.length) return;
+
+  // Keep score and best, reset everything else
+  applyWorld(nextIdx);
+  texCache = {};
+  matCache = {};
+
+  // Clear board
+  disposeAllStormLines();
+  for (var i = atoms.length - 1; i >= 0; i--) removeAtom(atoms[i]);
+  atoms = [];
+  if (ghostMesh) { ghostMesh.dispose(); ghostMesh = null; }
+
+  currentLevel = 0;
+  energy      = 0;
+  gameIsOver  = false;
+  canDrop     = true;
+  dangerStart = 0;
+  merging     = false;
+  moleculeCooldowns = {};
+  reservedAtoms = {};
+  comboIndex = 0;
+  globalMolCooldownEnd = 0;
+
+  try { scene.getPhysicsEngine().setGravity(vec3(0, -PHYSICS_PRESET.gravity, 0)); } catch(e){}
+
+  initQueue();
+  if (typeof createPickPlane === 'function') createPickPlane();
+  updateGhost();
+  updateQueuePreview();
+  buildLegend();
+  populateWorldSelector();
+  syncPhysicsUI();
+  saveGame();
+  updateHUD();
 }
 
 /* ── Merge Detection ────────────────────────────────────────── */
@@ -626,6 +720,17 @@ function doMerge(a, b) {
       sessionStats.merges++;
       if (newTier > sessionStats.highestTier) sessionStats.highestTier = newTier;
       sessionStats.totalEnergy += tierGain;
+
+      // Level progression — level = highest tier reached
+      if (newTier > currentLevel) {
+        currentLevel = newTier;
+        showLevelUpToast(currentLevel);
+        // World complete: reached the max element
+        if (currentLevel >= ELEMENT_DB.length - 1) {
+          setTimeout(function() { showWorldComplete(); }, 800);
+        }
+      }
+
       if (score > bestScore) {
         bestScore = score;
         try { localStorage.setItem('atomMerge_best', bestScore); } catch(e){}
@@ -968,12 +1073,13 @@ function restartGame() {
   if (ghostMesh) { ghostMesh.dispose(); ghostMesh = null; }
 
   initQueue();
-  score       = 0;
-  energy      = 0;
-  gameIsOver  = false;
-  canDrop     = true;
-  dangerStart = 0;
-  merging     = false;
+  score        = 0;
+  energy       = 0;
+  currentLevel = 0;
+  gameIsOver   = false;
+  canDrop      = true;
+  dangerStart  = 0;
+  merging      = false;
   moleculeCooldowns = {};
   reservedAtoms = {};
   comboIndex = 0;
@@ -1062,7 +1168,9 @@ function updateHUD() {
   }
   document.getElementById('atom-count').textContent = 'atoms: ' + atoms.length;
   var wl = document.getElementById('hud-world');
-  if (wl && WORLDS_DATA[worldIdx]) wl.textContent = '\u{1F30D} ' + WORLDS_DATA[worldIdx].label;
+  if (wl && WORLDS_DATA[worldIdx]) wl.textContent = '\u{1F30D} ' + WORLDS_DATA[worldIdx].label + '  Lv.' + (currentLevel + 1);
+  var dc = document.getElementById('drop-cost');
+  if (dc) dc.textContent = '-' + getDropCost() + '⚡';
 }
 
 function populateWorldSelector() {
