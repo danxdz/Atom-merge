@@ -100,7 +100,10 @@ function loadGame() {
       worldIdx = s.worldIdx;
       applyWorld(worldIdx);
     }
-    if (s.currentLevel !== undefined) currentLevel = s.currentLevel;
+    if (s.currentLevel !== undefined) {
+      var maxLvl = WORLDS_DATA[worldIdx].molecules ? WORLDS_DATA[worldIdx].molecules.length : 6;
+      currentLevel = Math.min(s.currentLevel, maxLvl - 1);
+    }
 
     score = s.score || 0;
     bestScore = s.bestScore || 0;
