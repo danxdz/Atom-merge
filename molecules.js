@@ -59,11 +59,12 @@ function scanMolecules() {
   var w = WORLDS_DATA[worldIdx];
   if (!w || !w.molecules || !w.molecules.length) return;
 
-  // Get recipes for current world sorted by priority desc, then input count desc
+  // Get recipes for current world — only active ones (unlocked by level)
+  var activeIds = typeof getActiveRecipeIds === 'function' ? getActiveRecipeIds() : (w.molecules || []);
   var recipes = [];
   for (var i = 0; i < MOLECULES_DATA.length; i++) {
     var r = MOLECULES_DATA[i];
-    if (w.molecules.indexOf(r.id) >= 0) recipes.push(r);
+    if (activeIds.indexOf(r.id) >= 0) recipes.push(r);
   }
   recipes.sort(function(a, b) {
     if (b.priority !== a.priority) return b.priority - a.priority;
@@ -237,6 +238,9 @@ function triggerMolecule(recipe, matchedAtoms) {
       saveGame();
       updateHUD();
       showMoleculeToast(recipe, bonus);
+
+      // Level-up check: notify game.js
+      if (typeof onMoleculeFormed === 'function') onMoleculeFormed(recipe);
     }, 150);
   }, 100);
 }

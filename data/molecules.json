@@ -18,7 +18,9 @@
     "effectRadius": 2.2,
     "refund": 2,
     "cooldownSec": 2.5,
-    "priority": 70
+    "priority": 70,
+    "name": "Hydroxyl",
+    "points": 30
   },
   {
     "id": "w1_no",
@@ -39,7 +41,9 @@
     "effectRadius": 2.2,
     "refund": 1,
     "cooldownSec": 2.5,
-    "priority": 70
+    "priority": 70,
+    "name": "Nitric Oxide",
+    "points": 30
   },
   {
     "id": "w1_co",
@@ -60,7 +64,9 @@
     "effectRadius": 2.4,
     "refund": 2,
     "cooldownSec": 3.0,
-    "priority": 70
+    "priority": 70,
+    "name": "Carbon Monoxide",
+    "points": 30
   },
   {
     "id": "w1_h2o",
@@ -85,7 +91,9 @@
     "effectRadius": 2.6,
     "refund": 4,
     "cooldownSec": 4.0,
-    "priority": 82
+    "priority": 82,
+    "name": "Water",
+    "points": 16
   },
   {
     "id": "w1_co2",
@@ -110,7 +118,9 @@
     "effectRadius": 2.8,
     "refund": 2,
     "cooldownSec": 4.0,
-    "priority": 82
+    "priority": 82,
+    "name": "Carbon Dioxide",
+    "points": 16
   },
   {
     "id": "w1_nh3",
@@ -139,7 +149,9 @@
     "effectRadius": 2.8,
     "refund": 0,
     "cooldownSec": 6.0,
-    "priority": 92
+    "priority": 92,
+    "name": "Ammonia",
+    "points": 5
   },
   {
     "id": "w2_fe_co",
@@ -160,7 +172,9 @@
     "effectRadius": 2.3,
     "refund": 1,
     "cooldownSec": 2.5,
-    "priority": 70
+    "priority": 70,
+    "name": "Iron Cobalt",
+    "points": 32
   },
   {
     "id": "w2_ti_v",
@@ -181,7 +195,9 @@
     "effectRadius": 2.4,
     "refund": 1,
     "cooldownSec": 3.0,
-    "priority": 70
+    "priority": 70,
+    "name": "Titanium Vanadium",
+    "points": 32
   },
   {
     "id": "w2_cr_mn",
@@ -202,7 +218,9 @@
     "effectRadius": 2.4,
     "refund": 2,
     "cooldownSec": 3.0,
-    "priority": 70
+    "priority": 70,
+    "name": "Chrome Manganese",
+    "points": 32
   },
   {
     "id": "w2_stainless",
@@ -227,7 +245,9 @@
     "effectRadius": 2.7,
     "refund": 3,
     "cooldownSec": 4.5,
-    "priority": 82
+    "priority": 82,
+    "name": "Stainless Steel",
+    "points": 18
   },
   {
     "id": "w2_tri_alloy",
@@ -252,7 +272,9 @@
     "effectRadius": 2.9,
     "refund": 2,
     "cooldownSec": 5.0,
-    "priority": 82
+    "priority": 82,
+    "name": "Tri-Alloy",
+    "points": 18
   },
   {
     "id": "w2_superalloy",
@@ -281,7 +303,9 @@
     "effectRadius": 3.0,
     "refund": 6,
     "cooldownSec": 7.0,
-    "priority": 92
+    "priority": 92,
+    "name": "Superalloy",
+    "points": 6
   },
   {
     "id": "w3_zr_nb",
@@ -302,7 +326,9 @@
     "effectRadius": 2.4,
     "refund": 2,
     "cooldownSec": 3.0,
-    "priority": 70
+    "priority": 70,
+    "name": "Zirconium Niobium",
+    "points": 34
   },
   {
     "id": "w3_mo_tc",
@@ -323,7 +349,9 @@
     "effectRadius": 2.0,
     "refund": 6,
     "cooldownSec": 4.0,
-    "priority": 70
+    "priority": 70,
+    "name": "Moly-Tech",
+    "points": 34
   },
   {
     "id": "w3_ru_rh",
@@ -344,7 +372,9 @@
     "effectRadius": 2.5,
     "refund": 1,
     "cooldownSec": 3.0,
-    "priority": 70
+    "priority": 70,
+    "name": "Ruthenium Rhodium",
+    "points": 34
   },
   {
     "id": "w3_tricat",
@@ -369,7 +399,9 @@
     "effectRadius": 2.9,
     "refund": 4,
     "cooldownSec": 5.0,
-    "priority": 82
+    "priority": 82,
+    "name": "Tri-Catalyst",
+    "points": 18
   },
   {
     "id": "w3_silver",
@@ -394,7 +426,9 @@
     "effectRadius": 2.7,
     "refund": 4,
     "cooldownSec": 5.5,
-    "priority": 82
+    "priority": 82,
+    "name": "Silver Compound",
+    "points": 18
   },
   {
     "id": "w3_xe_nova",
@@ -423,7 +457,9 @@
     "effectRadius": 3.2,
     "refund": 6,
     "cooldownSec": 7.5,
-    "priority": 92
+    "priority": 92,
+    "name": "Xenon Nova",
+    "points": 6
   },
   {
     "id": "w4_cs_ba",
@@ -444,7 +480,9 @@
     "effectRadius": 2.6,
     "refund": 2,
     "cooldownSec": 3.5,
-    "priority": 70
+    "priority": 70,
+    "name": "W4 Cs Ba",
+    "points": 36
   },
   {
     "id": "w4_nd_sm",
@@ -465,7 +503,9 @@
     "effectRadius": 3.2,
     "refund": 0,
     "cooldownSec": 4.0,
-    "priority": 70
+    "priority": 70,
+    "name": "W4 Nd Sm",
+    "points": 36
   },
   {
     "id": "w4_eu_gd",
@@ -486,7 +526,9 @@
     "effectRadius": 2.2,
     "refund": 8,
     "cooldownSec": 5.0,
-    "priority": 70
+    "priority": 70,
+    "name": "W4 Eu Gd",
+    "points": 36
   },
   {
     "id": "w4_glow_tri",
@@ -511,7 +553,9 @@
     "effectRadius": 3.0,
     "refund": 4,
     "cooldownSec": 6.0,
-    "priority": 82
+    "priority": 82,
+    "name": "W4 Glow Tri",
+    "points": 20
   },
   {
     "id": "w4_magnet_tri",
@@ -536,7 +580,9 @@
     "effectRadius": 3.4,
     "refund": 2,
     "cooldownSec": 6.5,
-    "priority": 82
+    "priority": 82,
+    "name": "W4 Magnet Tri",
+    "points": 20
   },
   {
     "id": "w4_matrix",
@@ -565,7 +611,9 @@
     "effectRadius": 3.6,
     "refund": 6,
     "cooldownSec": 8.0,
-    "priority": 92
+    "priority": 92,
+    "name": "W4 Matrix",
+    "points": 7
   },
   {
     "id": "w5_au_pt",
@@ -586,7 +634,9 @@
     "effectRadius": 2.8,
     "refund": 2,
     "cooldownSec": 4.0,
-    "priority": 70
+    "priority": 70,
+    "name": "W5 Au Pt",
+    "points": 38
   },
   {
     "id": "w5_hg_au",
@@ -607,7 +657,9 @@
     "effectRadius": 2.8,
     "refund": 0,
     "cooldownSec": 4.0,
-    "priority": 70
+    "priority": 70,
+    "name": "W5 Hg Au",
+    "points": 38
   },
   {
     "id": "w5_pb_tl",
@@ -628,7 +680,9 @@
     "effectRadius": 2.6,
     "refund": 0,
     "cooldownSec": 4.0,
-    "priority": 70
+    "priority": 70,
+    "name": "W5 Pb Tl",
+    "points": 38
   },
   {
     "id": "w5_os_ir_pt",
@@ -653,7 +707,9 @@
     "effectRadius": 3.2,
     "refund": 4,
     "cooldownSec": 6.5,
-    "priority": 82
+    "priority": 82,
+    "name": "W5 Os Ir Pt",
+    "points": 22
   },
   {
     "id": "w5_au2_hg",
@@ -678,7 +734,9 @@
     "effectRadius": 3.0,
     "refund": 6,
     "cooldownSec": 7.0,
-    "priority": 82
+    "priority": 82,
+    "name": "W5 Au2 Hg",
+    "points": 22
   },
   {
     "id": "w5_rn_fog",
@@ -707,7 +765,9 @@
     "effectRadius": 3.8,
     "refund": 6,
     "cooldownSec": 9.0,
-    "priority": 92
+    "priority": 92,
+    "name": "W5 Rn Fog",
+    "points": 8
   },
   {
     "id": "w6_u_np",
@@ -728,7 +788,9 @@
     "effectRadius": 3.0,
     "refund": 2,
     "cooldownSec": 4.0,
-    "priority": 70
+    "priority": 70,
+    "name": "W6 U Np",
+    "points": 40
   },
   {
     "id": "w6_pu_am",
@@ -749,7 +811,9 @@
     "effectRadius": 3.0,
     "refund": 2,
     "cooldownSec": 4.0,
-    "priority": 70
+    "priority": 70,
+    "name": "W6 Pu Am",
+    "points": 40
   },
   {
     "id": "w6_th_pa",
@@ -770,7 +834,9 @@
     "effectRadius": 2.8,
     "refund": 2,
     "cooldownSec": 4.0,
-    "priority": 70
+    "priority": 70,
+    "name": "W6 Th Pa",
+    "points": 40
   },
   {
     "id": "w6_fission",
@@ -795,7 +861,9 @@
     "effectRadius": 3.6,
     "refund": 6,
     "cooldownSec": 7.0,
-    "priority": 82
+    "priority": 82,
+    "name": "W6 Fission",
+    "points": 24
   },
   {
     "id": "w6_chain",
@@ -820,7 +888,9 @@
     "effectRadius": 3.5,
     "refund": 6,
     "cooldownSec": 7.5,
-    "priority": 82
+    "priority": 82,
+    "name": "W6 Chain",
+    "points": 24
   },
   {
     "id": "w6_core",
@@ -849,7 +919,9 @@
     "effectRadius": 4.2,
     "refund": 10,
     "cooldownSec": 10.0,
-    "priority": 92
+    "priority": 92,
+    "name": "W6 Core",
+    "points": 8
   },
   {
     "id": "w7_rf_db",
@@ -870,7 +942,9 @@
     "effectRadius": 3.4,
     "refund": 2,
     "cooldownSec": 4.5,
-    "priority": 70
+    "priority": 70,
+    "name": "Rutherfordium Dubnium",
+    "points": 44
   },
   {
     "id": "w7_ds_rg",
@@ -891,7 +965,9 @@
     "effectRadius": 3.2,
     "refund": 2,
     "cooldownSec": 4.5,
-    "priority": 70
+    "priority": 70,
+    "name": "W7 Ds Rg",
+    "points": 44
   },
   {
     "id": "w7_cn_nh",
@@ -912,7 +988,9 @@
     "effectRadius": 3.0,
     "refund": 2,
     "cooldownSec": 4.5,
-    "priority": 70
+    "priority": 70,
+    "name": "W7 Cn Nh",
+    "points": 44
   },
   {
     "id": "w7_timewarp",
@@ -937,7 +1015,9 @@
     "effectRadius": 3.8,
     "refund": 6,
     "cooldownSec": 8.0,
-    "priority": 82
+    "priority": 82,
+    "name": "W7 Timewarp",
+    "points": 28
   },
   {
     "id": "w7_corrosion",
@@ -962,7 +1042,9 @@
     "effectRadius": 3.9,
     "refund": 6,
     "cooldownSec": 8.5,
-    "priority": 82
+    "priority": 82,
+    "name": "W7 Corrosion",
+    "points": 28
   },
   {
     "id": "w7_og_end",
@@ -991,6 +1073,8 @@
     "effectRadius": 4.6,
     "refund": 12,
     "cooldownSec": 12.0,
-    "priority": 92
+    "priority": 92,
+    "name": "W7 Og End",
+    "points": 10
   }
 ]

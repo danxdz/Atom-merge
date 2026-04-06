@@ -17,7 +17,7 @@ var ghostMesh   = null;
 var ghostX      = 0;
 var dangerStart = 0;
 var merging     = false;
-var currentLevel = 0;   // highest tier reached in current world (0-indexed)
+var currentLevel = 0;   // molecule-based: 0-5 (6 recipes per world)
 var texCache    = {};
 var matCache    = {};
 var atomIdSeq   = 0;
@@ -36,13 +36,28 @@ function getActiveSpawnDeck() {
   var w = WORLDS_DATA[worldIdx];
   if (!w || !w.spawnDeck || w.spawnDeck.length === 0) return [0];
   var baseDeck = w.spawnDeck.slice();
-  var tiersToRemove = Math.floor(currentLevel / 4); // every 4 levels, trim 1 bottom tier
+  // Every 2 molecule-levels, trim 1 bottom tier (6 levels → max 3 trimmed)
+  var tiersToRemove = Math.floor(currentLevel / 2);
   tiersToRemove = Math.min(tiersToRemove, baseDeck.length - 1); // always keep at least 1
   return baseDeck.slice(tiersToRemove);
 }
 
 function getDropCost() {
-  return Math.floor(currentLevel / 4) + 1;
+  return Math.floor(currentLevel / 2) + 1;
+}
+
+/* Returns recipe IDs active at current level (0..currentLevel) */
+function getActiveRecipeIds() {
+  var w = WORLDS_DATA[worldIdx];
+  if (!w || !w.molecules) return [];
+  return w.molecules.slice(0, currentLevel + 1);
+}
+
+/* Returns the target recipe ID for the current level */
+function getTargetRecipeId() {
+  var w = WORLDS_DATA[worldIdx];
+  if (!w || !w.molecules || currentLevel >= w.molecules.length) return null;
+  return w.molecules[currentLevel];
 }
 
 function randDrop() {
@@ -556,18 +571,58 @@ function updateGhost() {
 }
 
 /* ── Level / World Progression ──────────────────────────────── */
-function showLevelUpToast(level) {
+function showLevelUpToast(recipeName) {
   var el = document.getElementById('level-toast');
   if (!el) return;
-  var deck = getActiveSpawnDeck();
   var dropCost = getDropCost();
-  el.innerHTML = '⬆ Level ' + (level + 1) + ' <span style="opacity:0.6;font-size:12px">Drop: -' + dropCost + '⚡</span>';
+  el.innerHTML = '⬆ Level ' + (currentLevel + 1) + ' — ' + (recipeName || '?') +
+    ' <span style="opacity:0.6;font-size:12px">Drop: -' + dropCost + '⚡</span>';
   el.style.opacity = '1';
   el.style.transform = 'translateX(-50%) translateY(0)';
   setTimeout(function() {
     el.style.opacity = '0';
     el.style.transform = 'translateX(-50%) translateY(-20px)';
-  }, 1800);
+  }, 2200);
+}
+
+/* Called by molecules.js after any molecule is formed */
+function onMoleculeFormed(recipe) {
+  var w = WORLDS_DATA[worldIdx];
+  if (!w || !w.molecules) return;
+  if (currentLevel >= w.molecules.length) return; // already complete
+  var targetId = w.molecules[currentLevel];
+  if (recipe.id !== targetId) return; // not the target molecule
+
+  currentLevel++;
+  var rName = recipe.name || recipe.id;
+  showLevelUpToast(rName);
+
+  // Spawn special atom: +3 tiers above current highest on board
+  var highest = 0;
+  for (var i = 0; i < atoms.length; i++) {
+    if (atoms[i].tier > highest) highest = atoms[i].tier;
+  }
+  var specialTier = Math.min(highest + 3, ELEMENT_DB.length - 1);
+  var spX = (Math.random() - 0.5) * (CONTAINER.w - 2);
+  var spY = CONTAINER.h * 0.6;
+  var sa = spawnAtom(specialTier, spX, spY, 0, true);
+  if (sa) {
+    // Give the special atom a glowing aura
+    try {
+      sa.mesh.material.emissiveColor = sa.mesh.material.emissiveColor.scale(3);
+      setTimeout(function() {
+        try { sa.mesh.material.emissiveColor = sa.mesh.material.emissiveColor.scale(0.33); } catch(e){}
+      }, 1500);
+    } catch(e){}
+  }
+
+  // World complete: crafted all 6 recipes
+  if (currentLevel >= w.molecules.length) {
+    setTimeout(function() { showWorldComplete(); }, 800);
+  }
+
+  saveGame();
+  updateHUD();
 }
 
 function showWorldComplete() {
@@ -720,16 +775,6 @@ function doMerge(a, b) {
       sessionStats.merges++;
       if (newTier > sessionStats.highestTier) sessionStats.highestTier = newTier;
       sessionStats.totalEnergy += tierGain;
-
-      // Level progression — level = highest tier reached
-      if (newTier > currentLevel) {
-        currentLevel = newTier;
-        showLevelUpToast(currentLevel);
-        // World complete: reached the max element
-        if (currentLevel >= ELEMENT_DB.length - 1) {
-          setTimeout(function() { showWorldComplete(); }, 800);
-        }
-      }
 
       if (score > bestScore) {
         bestScore = score;
@@ -1168,7 +1213,21 @@ function updateHUD() {
   }
   document.getElementById('atom-count').textContent = 'atoms: ' + atoms.length;
   var wl = document.getElementById('hud-world');
-  if (wl && WORLDS_DATA[worldIdx]) wl.textContent = '\u{1F30D} ' + WORLDS_DATA[worldIdx].label + '  Lv.' + (currentLevel + 1);
+  if (wl && WORLDS_DATA[worldIdx]) {
+    var targetId = getTargetRecipeId();
+    var targetLabel = '';
+    if (targetId) {
+      for (var mi = 0; mi < MOLECULES_DATA.length; mi++) {
+        if (MOLECULES_DATA[mi].id === targetId) {
+          var tr = MOLECULES_DATA[mi];
+          targetLabel = tr.name || tr.inputs.map(function(x){return x.sym;}).join('+');
+          break;
+        }
+      }
+    }
+    wl.textContent = '\u{1F30D} ' + WORLDS_DATA[worldIdx].label + '  Lv.' + (currentLevel + 1) +
+      (targetLabel ? ' \u{1F3AF}' + targetLabel : ' \u2713');
+  }
   var dc = document.getElementById('drop-cost');
   if (dc) dc.textContent = '-' + getDropCost() + '⚡';
 }
