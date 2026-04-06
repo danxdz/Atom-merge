@@ -184,7 +184,12 @@ function triggerMolecule(recipe, matchedAtoms) {
   // Flash + VFX
   moleculeVFX(recipe, center, matchedAtoms);
 
-  // Remove consumed atoms after brief animation
+  // Remove physics from consumed atoms IMMEDIATELY — prevents ghost collisions
+  for (var pi = 0; pi < matchedAtoms.length; pi++) {
+    try { matchedAtoms[pi].mesh.physicsImpostor.dispose(); } catch(e) {}
+  }
+
+  // Shrink animation (visual only, physics already gone)
   setTimeout(function() {
     for (var i = matchedAtoms.length - 1; i >= 0; i--) {
       try {
@@ -207,7 +212,7 @@ function triggerMolecule(recipe, matchedAtoms) {
           // Spawn near molecule center with slight random offset
           var ox = (Math.random() - 0.5) * 1.5;
           var oy = Math.random() * 0.5 + 0.3; // slightly above center
-          spawnAtom(bpTier, center.x + ox, center.y + oy, true);
+          spawnAtom(bpTier, center.x + ox, center.y + oy, 0, true);
         } catch(e) {}
       }
 
