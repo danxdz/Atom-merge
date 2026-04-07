@@ -177,13 +177,12 @@ async function boot() {
         if (vx < -maxV) body.velocity.x = -maxV;
         if (vy > maxV) body.velocity.y = maxV;  // cap upward
         if (vy < -maxV * 4) body.velocity.y = -maxV * 4; // allow faster falling
-        // Ensure no atom ever sleeps (prevents stuck-in-air bugs)
-        if (body.sleepState !== 0) body.wakeUp();
-        // Stuck detection: if atom is above resting zone but velocity is ~0, nudge it
+        // Stuck detection: if atom is well above resting zone with ~0 velocity, recover it
         var meshY = at.mesh.position.y;
         var restY = floorY + at.elem.r + 0.1;
-        if (meshY > restY + 1.0 && Math.abs(vy) < 0.05 && Math.abs(vx) < 0.05) {
-          // Atom is floating motionless — forcefully re-sync and nudge
+        if (meshY > restY + 1.5 && Math.abs(vy) < 0.1 && Math.abs(vx) < 0.1) {
+          // Atom is floating motionless — wake it and nudge down
+          if (body.sleepState !== 0) body.wakeUp();
           body.position.x = at.mesh.position.x;
           body.position.y = at.mesh.position.y;
           body.velocity.y = -2; // gentle downward nudge
@@ -449,8 +448,7 @@ function addPhysicsToAtom(sp, elem) {
     sp.physicsImpostor.physicsBody.angularFactor.set(0, 0, 1);
     sp.physicsImpostor.physicsBody.linearFactor.set(1, 1, 0);
     sp.physicsImpostor.physicsBody.angularDamping = 0.5;
-    sp.physicsImpostor.physicsBody.linearDamping = 0.08;
-    sp.physicsImpostor.physicsBody.allowSleep = false;
+    sp.physicsImpostor.physicsBody.linearDamping = 0.25;
     sp.physicsImpostor.physicsBody.position.z = 0;
   } catch(e) {}
 }
