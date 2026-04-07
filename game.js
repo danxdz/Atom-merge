@@ -153,7 +153,7 @@ async function boot() {
     /* energy only changes on merge — no passive drain */
     updateHUD();
     // Enforce Z=0 + wake stuck atoms + recover missing physics
-    var floorY = -(CONTAINER.h / 2) + 1;
+    var floorY = -(CONTAINER.h / 2);
     for (var zi = 0; zi < atoms.length; zi++) {
       var at = atoms[zi];
       if (at.merging) continue; // skip atoms mid-merge (physics disposed intentionally)
@@ -179,7 +179,26 @@ async function boot() {
         if (vy < -maxV * 4) body.velocity.y = -maxV * 4; // allow faster falling
         // Ensure no atom ever sleeps (prevents stuck-in-air bugs)
         if (body.sleepState !== 0) body.wakeUp();
-      } catch(e) {}
+        // Stuck detection: if atom is above resting zone but velocity is ~0, nudge it
+        var meshY = at.mesh.position.y;
+        var restY = floorY + at.elem.r + 0.1;
+        if (meshY > restY + 1.0 && Math.abs(vy) < 0.05 && Math.abs(vx) < 0.05) {
+          // Atom is floating motionless — forcefully re-sync and nudge
+          body.position.x = at.mesh.position.x;
+          body.position.y = at.mesh.position.y;
+          body.velocity.y = -2; // gentle downward nudge
+          at._stuckFrames = (at._stuckFrames || 0) + 1;
+          if (at._stuckFrames > 30) {
+            // Truly stuck for 30+ frames — nuke and re-create physics
+            console.warn('Nuking stuck atom physics', at.id);
+            try { imp.dispose(); } catch(e2){}
+            addPhysicsToAtom(at.mesh, at.elem);
+            at._stuckFrames = 0;
+          }
+        } else {
+          at._stuckFrames = 0;
+        }
+      } catch(e) { console.warn('Per-frame atom error:', e); }
     }
     scene.render();
   });
