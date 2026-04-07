@@ -152,14 +152,24 @@ async function boot() {
     updateStormLines();
     /* energy only changes on merge — no passive drain */
     updateHUD();
-    // Enforce Z=0 + wake stuck atoms + gravity boost for merged atoms
+    // Enforce Z=0 + wake stuck atoms + recover missing physics
     var floorY = -(CONTAINER.h / 2) + 1;
     for (var zi = 0; zi < atoms.length; zi++) {
+      var at = atoms[zi];
+      if (at.merging) continue; // skip atoms mid-merge (physics disposed intentionally)
       try {
-        var body = atoms[zi].mesh.physicsImpostor.physicsBody;
+        // Safety net: re-add physics if somehow lost
+        var imp = at.mesh.physicsImpostor;
+        if (!imp || !imp.physicsBody) {
+          console.warn('Re-adding physics to stuck atom', at.id);
+          addPhysicsToAtom(at.mesh, at.elem);
+          imp = at.mesh.physicsImpostor;
+        }
+        var body = imp.physicsBody;
+        if (!body) continue;
         body.position.z = 0;
         body.velocity.z = 0;
-        atoms[zi].mesh.position.z = 0;
+        at.mesh.position.z = 0;
         // Clamp velocity — prevent atoms flying out of box on merge
         var maxV = 3;
         var vx = body.velocity.x, vy = body.velocity.y;

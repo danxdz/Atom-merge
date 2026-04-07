@@ -184,8 +184,9 @@ function triggerMolecule(recipe, matchedAtoms) {
   // Flash + VFX
   moleculeVFX(recipe, center, matchedAtoms);
 
-  // Remove physics from consumed atoms IMMEDIATELY — prevents ghost collisions
+  // Mark consumed atoms so per-frame loop skips them, then remove physics
   for (var pi = 0; pi < matchedAtoms.length; pi++) {
+    matchedAtoms[pi].merging = true;
     try { matchedAtoms[pi].mesh.physicsImpostor.dispose(); } catch(e) {}
   }
 
