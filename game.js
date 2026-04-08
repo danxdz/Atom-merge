@@ -448,7 +448,7 @@ function addPhysicsToAtom(sp, elem) {
     sp.physicsImpostor.physicsBody.angularFactor.set(0, 0, 1);
     sp.physicsImpostor.physicsBody.linearFactor.set(1, 1, 0);
     sp.physicsImpostor.physicsBody.angularDamping = 0.5;
-    sp.physicsImpostor.physicsBody.linearDamping = 0.25;
+    sp.physicsImpostor.physicsBody.linearDamping = 0.12;
     sp.physicsImpostor.physicsBody.position.z = 0;
   } catch(e) {}
 }
@@ -568,6 +568,7 @@ function dropAtom(wx) {
   energy = Math.max(0, energy - dropCost);
 
   spawnAtom(dropQueue[0], wx, GAME_RULES.dropY, 0, true); // skipAnim — just drop
+  wakeNearby(wx, GAME_RULES.dropY, 5); // wake sleeping atoms below drop zone
   sessionStats.dropsCount++;
 
   // Hide ghost — the sweep animation replaces it
@@ -717,6 +718,22 @@ function continueToNextWorld() {
   updateHUD();
 }
 
+/* ── Wake Nearby ─────────────────────────────────────────────── */
+function wakeNearby(x, y, radius) {
+  for (var i = 0; i < atoms.length; i++) {
+    var at = atoms[i];
+    if (at.merging) continue;
+    try {
+      var dx = at.mesh.position.x - x;
+      var dy = at.mesh.position.y - y;
+      if (dx * dx + dy * dy < radius * radius) {
+        var body = at.mesh.physicsImpostor && at.mesh.physicsImpostor.physicsBody;
+        if (body && body.sleepState !== 0) body.wakeUp();
+      }
+    } catch(e) {}
+  }
+}
+
 /* ── Merge Detection ────────────────────────────────────────── */
 function checkMerges() {
   if (merging || gameIsOver) return;
@@ -796,6 +813,8 @@ function doMerge(a, b) {
         } catch(e){}
       }
 
+      // Wake nearby sleeping atoms so they react to the new arrival
+      wakeNearby(cx, cy, nr + 3);
       score  += pts;
       /* Energy gain: design formula with combo bonus */
       var tierGain = calcEnergyGain(newTier);
