@@ -167,50 +167,16 @@ async function boot() {
         }
         var body = imp.physicsBody;
         if (!body) continue;
-        // Lock Z axis
+        // Lock Z axis only
         body.position.z = 0;
         body.velocity.z = 0;
         at.mesh.position.z = 0;
-        // Clamp velocity
-        var maxV = 3;
+        // Safety clamp — only extreme velocities (explosion prevention)
         var vx = body.velocity.x, vy = body.velocity.y;
-        if (vx > maxV) body.velocity.x = maxV;
-        if (vx < -maxV) body.velocity.x = -maxV;
-        if (vy > maxV) body.velocity.y = maxV;
-        if (vy < -maxV * 6) body.velocity.y = -maxV * 6; // allow fast falling
-        // Micro-velocity damping: kill small movements to prevent jitter
-        var speed2 = vx * vx + vy * vy;
-        if (speed2 < 0.15) { // speed < ~0.39
-          body.velocity.x *= 0.5;
-          body.velocity.y *= 0.5;
-        }
-        if (speed2 < 0.03) { // speed < ~0.17 — fully stop
-          body.velocity.x = 0;
-          body.velocity.y = 0;
-        }
-        // Damp angular independently
-        var av = body.angularVelocity;
-        var angSpeed2 = av.x * av.x + av.y * av.y + av.z * av.z;
-        if (angSpeed2 < 0.1) {
-          av.x = 0; av.y = 0; av.z = 0;
-        }
-        // Stuck detection: floating motionless well above resting zone
-        var meshY = at.mesh.position.y;
-        var restY = floorY + at.elem.r + 0.1;
-        if (meshY > restY + 1.5 && speed2 < 0.02) {
-          body.position.x = at.mesh.position.x;
-          body.position.y = at.mesh.position.y;
-          body.velocity.y = -3; // nudge down
-          at._stuckFrames = (at._stuckFrames || 0) + 1;
-          if (at._stuckFrames > 20) {
-            console.warn('Nuking stuck atom physics', at.id);
-            try { imp.dispose(); } catch(e2){}
-            addPhysicsToAtom(at.mesh, at.elem);
-            at._stuckFrames = 0;
-          }
-        } else {
-          at._stuckFrames = 0;
-        }
+        if (vx > 5) body.velocity.x = 5;
+        if (vx < -5) body.velocity.x = -5;
+        if (vy > 5) body.velocity.y = 5;
+        if (vy < -20) body.velocity.y = -20;
       } catch(e) {}
     }
     scene.render();
@@ -473,8 +439,8 @@ function addPhysicsToAtom(sp, elem) {
   try {
     sp.physicsImpostor.physicsBody.angularFactor.set(0, 0, 1);
     sp.physicsImpostor.physicsBody.linearFactor.set(1, 1, 0);
-    sp.physicsImpostor.physicsBody.angularDamping = 0.85;
-    sp.physicsImpostor.physicsBody.linearDamping = 0.35;
+    sp.physicsImpostor.physicsBody.angularDamping = 0.6;
+    sp.physicsImpostor.physicsBody.linearDamping = 0.08;
     sp.physicsImpostor.physicsBody.allowSleep = false;
     sp.physicsImpostor.physicsBody.position.z = 0;
   } catch(e) {}
