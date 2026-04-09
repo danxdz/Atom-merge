@@ -71,8 +71,8 @@ var WORLDS = [
 /* ---------- Physics Preset ---------- */
 const PHYSICS_PRESET = {
   gravity:        22,
-  restitution:    0.15,
-  friction:       0.5,
+  restitution:    0.02,
+  friction:       0.8,
   linearDamping:  0.3,
   angularDamping: 0.5,
 };

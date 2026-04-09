@@ -178,14 +178,21 @@ async function boot() {
         if (vx < -maxV) body.velocity.x = -maxV;
         if (vy > maxV) body.velocity.y = maxV;
         if (vy < -maxV * 6) body.velocity.y = -maxV * 6; // allow fast falling
-        // Micro-velocity damping: kill tiny movements to prevent jitter
+        // Micro-velocity damping: kill small movements to prevent jitter
         var speed2 = vx * vx + vy * vy;
-        if (speed2 < 0.02) { // speed < ~0.14
+        if (speed2 < 0.15) { // speed < ~0.39
+          body.velocity.x *= 0.5;
+          body.velocity.y *= 0.5;
+        }
+        if (speed2 < 0.03) { // speed < ~0.17 — fully stop
           body.velocity.x = 0;
           body.velocity.y = 0;
-          body.angularVelocity.x = 0;
-          body.angularVelocity.y = 0;
-          body.angularVelocity.z = 0;
+        }
+        // Damp angular independently
+        var av = body.angularVelocity;
+        var angSpeed2 = av.x * av.x + av.y * av.y + av.z * av.z;
+        if (angSpeed2 < 0.1) {
+          av.x = 0; av.y = 0; av.z = 0;
         }
         // Stuck detection: floating motionless well above resting zone
         var meshY = at.mesh.position.y;
@@ -255,9 +262,21 @@ function buildScene() {
   scene = new BABYLON.Scene(engine);
   scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
 
-  // Physics
-  scene.enablePhysics(vec3(0, -PHYSICS_PRESET.gravity, 0),
-    new BABYLON.CannonJSPlugin(true, 10, CANNON));
+  // Physics — 20 solver iterations for stable stacking
+  var cannonPlugin = new BABYLON.CannonJSPlugin(true, 20, CANNON);
+  scene.enablePhysics(vec3(0, -PHYSICS_PRESET.gravity, 0), cannonPlugin);
+  // Tune Cannon.js world for stable piles
+  var cWorld = cannonPlugin.world;
+  if (cWorld) {
+    cWorld.solver.tolerance = 0.001;
+    // Default contact material — low bounce, high friction
+    if (cWorld.defaultContactMaterial) {
+      cWorld.defaultContactMaterial.restitution = 0.02;
+      cWorld.defaultContactMaterial.friction = 0.8;
+      cWorld.defaultContactMaterial.contactEquationStiffness = 1e8;
+      cWorld.defaultContactMaterial.contactEquationRelaxation = 3;
+    }
+  }
 
   // Camera — fixed front view, responsive fit
   camera = new BABYLON.FreeCamera('cam', vec3(0, 10, 38), scene);
@@ -454,8 +473,8 @@ function addPhysicsToAtom(sp, elem) {
   try {
     sp.physicsImpostor.physicsBody.angularFactor.set(0, 0, 1);
     sp.physicsImpostor.physicsBody.linearFactor.set(1, 1, 0);
-    sp.physicsImpostor.physicsBody.angularDamping = 0.5;
-    sp.physicsImpostor.physicsBody.linearDamping = 0.12;
+    sp.physicsImpostor.physicsBody.angularDamping = 0.85;
+    sp.physicsImpostor.physicsBody.linearDamping = 0.35;
     sp.physicsImpostor.physicsBody.allowSleep = false;
     sp.physicsImpostor.physicsBody.position.z = 0;
   } catch(e) {}
