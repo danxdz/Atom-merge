@@ -152,11 +152,11 @@ async function boot() {
     updateStormLines();
     /* energy only changes on merge — no passive drain */
     updateHUD();
-    // Enforce Z=0 + wake stuck atoms + recover missing physics
+    // Enforce Z=0 + micro-velocity damping + recover missing physics
     var floorY = -(CONTAINER.h / 2);
     for (var zi = 0; zi < atoms.length; zi++) {
       var at = atoms[zi];
-      if (at.merging) continue; // skip atoms mid-merge (physics disposed intentionally)
+      if (at.merging) continue;
       try {
         // Safety net: re-add physics if somehow lost
         var imp = at.mesh.physicsImpostor;
@@ -167,28 +167,35 @@ async function boot() {
         }
         var body = imp.physicsBody;
         if (!body) continue;
+        // Lock Z axis
         body.position.z = 0;
         body.velocity.z = 0;
         at.mesh.position.z = 0;
-        // Clamp velocity — prevent atoms flying out of box on merge
+        // Clamp velocity
         var maxV = 3;
         var vx = body.velocity.x, vy = body.velocity.y;
         if (vx > maxV) body.velocity.x = maxV;
         if (vx < -maxV) body.velocity.x = -maxV;
-        if (vy > maxV) body.velocity.y = maxV;  // cap upward
-        if (vy < -maxV * 4) body.velocity.y = -maxV * 4; // allow faster falling
-        // Stuck detection: if atom is well above resting zone with ~0 velocity, recover it
+        if (vy > maxV) body.velocity.y = maxV;
+        if (vy < -maxV * 6) body.velocity.y = -maxV * 6; // allow fast falling
+        // Micro-velocity damping: kill tiny movements to prevent jitter
+        var speed2 = vx * vx + vy * vy;
+        if (speed2 < 0.02) { // speed < ~0.14
+          body.velocity.x = 0;
+          body.velocity.y = 0;
+          body.angularVelocity.x = 0;
+          body.angularVelocity.y = 0;
+          body.angularVelocity.z = 0;
+        }
+        // Stuck detection: floating motionless well above resting zone
         var meshY = at.mesh.position.y;
         var restY = floorY + at.elem.r + 0.1;
-        if (meshY > restY + 1.5 && Math.abs(vy) < 0.1 && Math.abs(vx) < 0.1) {
-          // Atom is floating motionless — wake it and nudge down
-          if (body.sleepState !== 0) body.wakeUp();
+        if (meshY > restY + 1.5 && speed2 < 0.02) {
           body.position.x = at.mesh.position.x;
           body.position.y = at.mesh.position.y;
-          body.velocity.y = -2; // gentle downward nudge
+          body.velocity.y = -3; // nudge down
           at._stuckFrames = (at._stuckFrames || 0) + 1;
-          if (at._stuckFrames > 30) {
-            // Truly stuck for 30+ frames — nuke and re-create physics
+          if (at._stuckFrames > 20) {
             console.warn('Nuking stuck atom physics', at.id);
             try { imp.dispose(); } catch(e2){}
             addPhysicsToAtom(at.mesh, at.elem);
@@ -197,7 +204,7 @@ async function boot() {
         } else {
           at._stuckFrames = 0;
         }
-      } catch(e) { console.warn('Per-frame atom error:', e); }
+      } catch(e) {}
     }
     scene.render();
   });
@@ -449,6 +456,7 @@ function addPhysicsToAtom(sp, elem) {
     sp.physicsImpostor.physicsBody.linearFactor.set(1, 1, 0);
     sp.physicsImpostor.physicsBody.angularDamping = 0.5;
     sp.physicsImpostor.physicsBody.linearDamping = 0.12;
+    sp.physicsImpostor.physicsBody.allowSleep = false;
     sp.physicsImpostor.physicsBody.position.z = 0;
   } catch(e) {}
 }
@@ -568,7 +576,6 @@ function dropAtom(wx) {
   energy = Math.max(0, energy - dropCost);
 
   spawnAtom(dropQueue[0], wx, GAME_RULES.dropY, 0, true); // skipAnim — just drop
-  wakeNearby(wx, GAME_RULES.dropY, 5); // wake sleeping atoms below drop zone
   sessionStats.dropsCount++;
 
   // Hide ghost — the sweep animation replaces it
@@ -813,8 +820,6 @@ function doMerge(a, b) {
         } catch(e){}
       }
 
-      // Wake nearby sleeping atoms so they react to the new arrival
-      wakeNearby(cx, cy, nr + 3);
       score  += pts;
       /* Energy gain: design formula with combo bonus */
       var tierGain = calcEnergyGain(newTier);
