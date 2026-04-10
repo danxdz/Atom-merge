@@ -251,41 +251,40 @@ function triggerMolecule(recipe, matchedAtoms) {
       })(bp);
     }
 
-      // Apply gameplay effect
-      applyMoleculeGameplay(recipe, center);
+    // Apply gameplay effect
+    applyMoleculeGameplay(recipe, center);
 
-      // Refund
-      if (recipe.refund) {
-        var maxRefund = Math.floor(recipe.cost * 0.4);
-        var refund = Math.min(recipe.refund, maxRefund);
-        energy = Math.min(ENERGY_RULESET.maxEnergy || 100, energy + refund);
-      }
+    // Refund
+    if (recipe.refund) {
+      var maxRefund = Math.floor(recipe.cost * 0.4);
+      var refund = Math.min(recipe.refund, maxRefund);
+      energy = Math.min(ENERGY_RULESET.maxEnergy || 100, energy + refund);
+    }
 
-      // Score bonus
-      var bonus = recipe.cost * 2 + comboIndex * 10;
-      score += bonus;
-      if (score > bestScore) {
-        bestScore = score;
-        try { localStorage.setItem('atomMerge_best', bestScore); } catch(e) {}
-      }
+    // Score bonus
+    var bonus = recipe.cost * 2 + comboIndex * 10;
+    score += bonus;
+    if (score > bestScore) {
+      bestScore = score;
+      try { localStorage.setItem('atomMerge_best', bestScore); } catch(e) {}
+    }
 
-      // Combo
-      comboIndex++;
-      if (comboResetTimer) clearTimeout(comboResetTimer);
-      comboResetTimer = setTimeout(function() { comboIndex = 0; }, 3000);
+    // Combo
+    comboIndex++;
+    if (comboResetTimer) clearTimeout(comboResetTimer);
+    comboResetTimer = setTimeout(function() { comboIndex = 0; }, 3000);
 
-      // KPIs
-      sessionStats.molecules++;
-      moleculeLog.push({ id: recipe.id, t: Date.now(), combo: comboIndex });
-      if (moleculeLog.length > 50) moleculeLog.shift();
+    // KPIs
+    sessionStats.molecules++;
+    moleculeLog.push({ id: recipe.id, t: Date.now(), combo: comboIndex });
+    if (moleculeLog.length > 50) moleculeLog.shift();
 
-      saveGame();
-      updateHUD();
-      showMoleculeToast(recipe, bonus);
+    saveGame();
+    updateHUD();
+    showMoleculeToast(recipe, bonus);
 
-      // Level-up check: notify game.js
-      if (typeof onMoleculeFormed === 'function') onMoleculeFormed(recipe);
-    }, 150);
+    // Level-up check: notify game.js
+    if (typeof onMoleculeFormed === 'function') onMoleculeFormed(recipe);
   }, 100);
 }
 
