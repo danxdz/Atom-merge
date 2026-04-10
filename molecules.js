@@ -184,38 +184,72 @@ function triggerMolecule(recipe, matchedAtoms) {
   // Flash + VFX
   moleculeVFX(recipe, center, matchedAtoms);
 
-  // Mark consumed atoms so per-frame loop skips them, then remove physics
+  // Mark consumed atoms — remove physics, animate pull-to-center + grow + vanish
   for (var pi = 0; pi < matchedAtoms.length; pi++) {
     matchedAtoms[pi].merging = true;
     try { matchedAtoms[pi].mesh.physicsImpostor.dispose(); } catch(e) {}
   }
 
-  // Shrink animation (visual only, physics already gone)
-  setTimeout(function() {
-    for (var i = matchedAtoms.length - 1; i >= 0; i--) {
-      try {
-        shrink(matchedAtoms[i].mesh);
-      } catch(e) {}
-    }
-    setTimeout(function() {
-      for (var i = matchedAtoms.length - 1; i >= 0; i--) {
-        try { removeAtom(matchedAtoms[i]); } catch(e) {}
-      }
+  // Animate consumed atoms: pull toward center + grow slightly, then pop away
+  for (var ai = 0; ai < matchedAtoms.length; ai++) {
+    (function(atom, idx) {
+      var m = atom.mesh;
+      if (!m) return;
+      var startPos = m.position.clone();
+      var startScale = m.scaling.clone();
+      var bigScale = startScale.scale(1.35); // grow 35%
+      // Pull-to-center + grow (150ms)
+      var posAnim = new BABYLON.Animation('molPull', 'position', 60,
+        BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+        BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+      posAnim.setKeys([
+        { frame: 0, value: startPos },
+        { frame: 9, value: center.clone() }
+      ]);
+      var scaleUp = new BABYLON.Animation('molGrow', 'scaling', 60,
+        BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+        BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+      scaleUp.setKeys([
+        { frame: 0, value: startScale },
+        { frame: 6, value: bigScale },
+        { frame: 9, value: new BABYLON.Vector3(0.01, 0.01, 0.01) }
+      ]);
+      m.animations = [posAnim, scaleUp];
+      scene.beginAnimation(m, 0, 9, false, 1, function() {
+        try { removeAtom(atom); } catch(e) {}
+      });
+    })(matchedAtoms[ai], ai);
+  }
 
-      // Spawn byproduct atoms — keeps board populated
-      // inputs=2 → 1 byproduct, inputs=3 → 2, inputs=4 → 3 (net always -1)
-      var numByproducts = Math.max(1, matchedAtoms.length - 1);
-      for (var bp = 0; bp < numByproducts; bp++) {
+  // Spawn byproducts FROM center after consume animation finishes (~200ms)
+  setTimeout(function() {
+    var numByproducts = Math.max(1, matchedAtoms.length - 1);
+    for (var bp = 0; bp < numByproducts; bp++) {
+      (function(bpIdx) {
         try {
-          // Pick random tier from spawn deck (small atoms)
           var deck = currentWorld.spawnDeck || [];
           var bpTier = deck.length > 0 ? deck[Math.floor(Math.random() * deck.length)] : 1;
-          // Spawn near molecule center with slight random offset
-          var ox = (Math.random() - 0.5) * 1.5;
-          var oy = Math.random() * 0.5 + 0.3; // slightly above center
-          spawnAtom(bpTier, center.x + ox, center.y + oy, 0, true);
+          var ox = (Math.random() - 0.5) * 0.8;
+          var oy = Math.random() * 0.3;
+          var atom = spawnAtom(bpTier, center.x, center.y, 0, true);
+          // Pop-out animation: start tiny at center, grow to full size
+          if (atom && atom.mesh) {
+            var fullScale = atom.mesh.scaling.clone();
+            atom.mesh.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
+            var popAnim = new BABYLON.Animation('molPop', 'scaling', 60,
+              BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+              BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+            popAnim.setKeys([
+              { frame: 0, value: new BABYLON.Vector3(0.01, 0.01, 0.01) },
+              { frame: 5, value: fullScale.scale(1.15) },
+              { frame: 8, value: fullScale }
+            ]);
+            atom.mesh.animations = [popAnim];
+            scene.beginAnimation(atom.mesh, 0, 8, false);
+          }
         } catch(e) {}
-      }
+      })(bp);
+    }
 
       // Apply gameplay effect
       applyMoleculeGameplay(recipe, center);

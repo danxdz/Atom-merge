@@ -156,7 +156,15 @@ async function boot() {
     var floorY = -(CONTAINER.h / 2);
     for (var zi = 0; zi < atoms.length; zi++) {
       var at = atoms[zi];
-      if (at.merging) continue;
+      // Safety: clear stuck merging flag after 1s
+      if (at.merging) {
+        if (!at._mergeStart) at._mergeStart = Date.now();
+        if (Date.now() - at._mergeStart > 1000) {
+          at.merging = false;
+          at._mergeStart = 0;
+          console.warn('Cleared stuck merging flag on atom', at.id);
+        } else { continue; }
+      }
       try {
         // Safety net: re-add physics if somehow lost
         var imp = at.mesh.physicsImpostor;
