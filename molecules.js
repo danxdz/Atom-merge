@@ -221,7 +221,7 @@ function triggerMolecule(recipe, matchedAtoms) {
     })(matchedAtoms[ai], ai);
   }
 
-  // Spawn byproducts FROM center after consume animation finishes (~200ms)
+  // Spawn byproducts FROM center after consume animation finishes (~250ms)
   setTimeout(function() {
     var numByproducts = Math.max(1, matchedAtoms.length - 1);
     for (var bp = 0; bp < numByproducts; bp++) {
@@ -283,9 +283,9 @@ function triggerMolecule(recipe, matchedAtoms) {
     updateHUD();
     showMoleculeToast(recipe, bonus);
 
-    // Level-up check: notify game.js
-    if (typeof onMoleculeFormed === 'function') onMoleculeFormed(recipe);
-  }, 100);
+    // Level-up check: notify game.js — pass center so special atom spawns FROM molecule
+    if (typeof onMoleculeFormed === 'function') onMoleculeFormed(recipe, center);
+  }, 250);
 }
 
 /* ── Molecule Toast (brief notification) ────────────────────── */

@@ -236,8 +236,8 @@ function buildScene() {
   scene = new BABYLON.Scene(engine);
   scene.clearColor = new BABYLON.Color4(0, 0, 0, 0);
 
-  // Physics — 20 solver iterations for stable stacking
-  var cannonPlugin = new BABYLON.CannonJSPlugin(true, 20, CANNON);
+  // Physics — 12 solver iterations (fewer = less over-correction with many atoms)
+  var cannonPlugin = new BABYLON.CannonJSPlugin(true, 12, CANNON);
   scene.enablePhysics(vec3(0, -PHYSICS_PRESET.gravity, 0), cannonPlugin);
   // Tune Cannon.js world for stable piles
   var cWorld = cannonPlugin.world;
@@ -618,7 +618,7 @@ function showLevelUpToast(recipeName) {
 }
 
 /* Called by molecules.js after any molecule is formed */
-function onMoleculeFormed(recipe) {
+function onMoleculeFormed(recipe, molCenter) {
   var w = WORLDS_DATA[worldIdx];
   if (!w || !w.molecules) return;
   if (currentLevel >= w.molecules.length) return; // already complete
@@ -629,14 +629,14 @@ function onMoleculeFormed(recipe) {
   var rName = recipe.name || recipe.id;
   showLevelUpToast(rName);
 
-  // Spawn special atom: +3 tiers above current highest on board
+  // Spawn special atom FROM molecule center (not mid-air)
   var highest = 0;
   for (var i = 0; i < atoms.length; i++) {
     if (atoms[i].tier > highest) highest = atoms[i].tier;
   }
   var specialTier = Math.min(highest + 3, ELEMENT_DB.length - 1);
-  var spX = (Math.random() - 0.5) * (CONTAINER.w - 2);
-  var spY = CONTAINER.h * 0.6;
+  var spX = molCenter ? molCenter.x : (Math.random() - 0.5) * (CONTAINER.w - 2);
+  var spY = molCenter ? molCenter.y : CONTAINER.h * 0.6;
   var sa = spawnAtom(specialTier, spX, spY, 0, true);
   if (sa) {
     // Give the special atom a glowing aura
