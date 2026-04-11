@@ -181,9 +181,9 @@ async function boot() {
         at.mesh.position.z = 0;
         // Safety clamp — only extreme velocities (explosion prevention)
         var vx = body.velocity.x, vy = body.velocity.y;
-        if (vx > 5) body.velocity.x = 5;
-        if (vx < -5) body.velocity.x = -5;
-        if (vy > 5) body.velocity.y = 5;
+        if (vx > 8) body.velocity.x = 8;
+        if (vx < -8) body.velocity.x = -8;
+        if (vy > 10) body.velocity.y = 10;
         if (vy < -20) body.velocity.y = -20;
       } catch(e) {}
     }
@@ -439,7 +439,8 @@ function spawnAtom(tier, x, y, z, skipAnim) {
 }
 
 function addPhysicsToAtom(sp, elem) {
-  var mass = Math.pow(elem.r, 3) * 5;
+  // Linear mass — avoids huge mass ratios that make big atoms immovable
+  var mass = 0.5 + elem.r * 2;
   sp.physicsImpostor = new BABYLON.PhysicsImpostor(sp,
     BABYLON.PhysicsImpostor.SphereImpostor,
     { mass: mass, restitution: PHYSICS_PRESET.restitution, friction: PHYSICS_PRESET.friction },
