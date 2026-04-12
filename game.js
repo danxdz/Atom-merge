@@ -247,8 +247,8 @@ function buildScene() {
     if (cWorld.defaultContactMaterial) {
       cWorld.defaultContactMaterial.restitution = 0.02;
       cWorld.defaultContactMaterial.friction = 0.8;
-      cWorld.defaultContactMaterial.contactEquationStiffness = 1e8;
-      cWorld.defaultContactMaterial.contactEquationRelaxation = 3;
+      cWorld.defaultContactMaterial.contactEquationStiffness = 1e6;
+      cWorld.defaultContactMaterial.contactEquationRelaxation = 4;
     }
   }
 
@@ -307,21 +307,25 @@ function buildContainer() {
 
   var ph = { mass:0, restitution:PHYSICS_PRESET.restitution, friction:PHYSICS_PRESET.friction };
 
-  function wall(name, w, h, d, x, y, z, vis) {
+  function wall(name, w, h, d, x, y, z, vis, hasPhysics) {
     var m = BABYLON.MeshBuilder.CreateBox(name, {width:w,height:h,depth:d}, scene);
     m.position.set(x, y, z);
     m.material = wm;
     if (vis === false) m.isVisible = false;
-    m.physicsImpostor = new BABYLON.PhysicsImpostor(m,
-      BABYLON.PhysicsImpostor.BoxImpostor, ph, scene);
+    if (hasPhysics !== false) {
+      m.physicsImpostor = new BABYLON.PhysicsImpostor(m,
+        BABYLON.PhysicsImpostor.BoxImpostor, ph, scene);
+    }
     return m;
   }
 
   wall('floor', W+2*T, T, D+2*T,  0,            -T/2,        0);
   wall('left',  T,     H, D,      -(W/2+T/2),    H/2,         0);
   wall('right', T,     H, D,       (W/2+T/2),    H/2,         0);
-  wall('back',  W,     H, T,       0,             H/2,        -(D/2+T/2));
-  wall('front', W,     H, T,       0,             H/2,         (D/2+T/2), false);
+  // Front/back walls: visual only, NO physics — Z is locked by linearFactor
+  // Having physics here causes big atoms (r>1.5) to collide with both walls → freeze
+  wall('back',  W,     H, T,       0,             H/2,        -(D/2+T/2), true, false);
+  wall('front', W,     H, T,       0,             H/2,         (D/2+T/2), false, false);
 }
 
 function buildDangerLine() {
