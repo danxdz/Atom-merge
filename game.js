@@ -303,7 +303,7 @@ function buildContainer() {
   wm.diffuseColor  = new BABYLON.Color3(0.12, 0.16, 0.32);
   wm.specularColor = new BABYLON.Color3(0.15, 0.20, 0.35);
   wm.emissiveColor = new BABYLON.Color3(0.04, 0.06, 0.12);
-  wm.alpha = 0.25;
+  wm.alpha = 0.08;
 
   var ph = { mass:0, restitution:PHYSICS_PRESET.restitution, friction:PHYSICS_PRESET.friction };
 
