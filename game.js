@@ -324,7 +324,7 @@ function buildContainer() {
   wall('right', T,     H, D,       (W/2+T/2),    H/2,         0);
   // Front/back walls: visual only, NO physics — Z is locked by linearFactor
   // Having physics here causes big atoms (r>1.5) to collide with both walls → freeze
-  wall('back',  W,     H, T,       0,             H/2,        -(D/2+T/2), true, false);
+  wall('back',  W,     H, T,       0,             H/2,        -(D/2+T/2), false, false);
   wall('front', W,     H, T,       0,             H/2,         (D/2+T/2), false, false);
 }
 
