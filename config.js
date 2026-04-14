@@ -97,7 +97,7 @@ const GAME_RULES = {
   dropY:        10,
   dangerY:      9,
   dropCooldown: 450,   // ms between drops (debounce rapid clicks)
-  settleDelay:  150,   // ms before atom can merge
+  settleDelay:  50,    // ms before atom can merge (near-instant)
   mergeAnimMs:  120,   // ms for shrink animation
   dangerGrace:  2500,  // ms above danger before game over
   maxAtoms:     80,

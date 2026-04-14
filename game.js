@@ -741,7 +741,7 @@ function wakeNearby(x, y, radius) {
 
 /* ── Merge Detection ────────────────────────────────────────── */
 function checkMerges() {
-  if (merging || gameIsOver) return;
+  if (gameIsOver) return;
 
   for (var i = 0; i < atoms.length; i++) {
     var a = atoms[i];
@@ -755,7 +755,7 @@ function checkMerges() {
       var d = BABYLON.Vector3.Distance(
         a.mesh.getAbsolutePosition(),
         b.mesh.getAbsolutePosition());
-      if (d <= (a.r + b.r) * 1.18) {
+      if (d <= (a.r + b.r) * 1.25) {
         doMerge(a, b);
         return;
       }
@@ -763,14 +763,38 @@ function checkMerges() {
   }
 }
 
-var mergeTimeout = null;
+/* ── Arcade Floating Text VFX ──────────────────────────────── */
+function floatText(worldPos, line1, line2, color) {
+  var el = document.createElement('div');
+  el.style.cssText = 'position:fixed;pointer-events:none;z-index:999;font-family:"Orbitron",sans-serif;text-align:center;white-space:nowrap;transition:none;';
+  var screenPos = BABYLON.Vector3.Project(worldPos,
+    BABYLON.Matrix.Identity(),
+    scene.getTransformMatrix(),
+    camera.viewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight()));
+  el.style.left = screenPos.x + 'px';
+  el.style.top = screenPos.y + 'px';
+  el.style.transform = 'translate(-50%,-50%)';
+  el.innerHTML = '<div style="font-size:18px;font-weight:900;color:' + (color || '#FFD700') +
+    ';text-shadow:0 0 8px ' + (color || '#FFD700') + ',0 2px 4px rgba(0,0,0,0.8)">' + line1 + '</div>' +
+    (line2 ? '<div style="font-size:13px;font-weight:700;color:#fff;text-shadow:0 0 6px rgba(255,255,255,0.5),0 1px 3px rgba(0,0,0,0.9);margin-top:2px">' + line2 + '</div>' : '');
+  document.body.appendChild(el);
+  var startY = screenPos.y;
+  var startT = performance.now();
+  var dur = 900;
+  function tick() {
+    var p = (performance.now() - startT) / dur;
+    if (p >= 1) { el.remove(); return; }
+    el.style.top = (startY - p * 70) + 'px';
+    el.style.opacity = (1 - p * p).toString();
+    el.style.transform = 'translate(-50%,-50%) scale(' + (1 + p * 0.3) + ')';
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 function doMerge(a, b) {
-  merging  = true;
   a.merging = true;
   b.merging = true;
-  // Safety: force-reset merging flag if stuck for too long
-  if (mergeTimeout) clearTimeout(mergeTimeout);
-  mergeTimeout = setTimeout(function() { merging = false; }, 600);
 
   var mid = BABYLON.Vector3.Lerp(
     a.mesh.getAbsolutePosition(),
@@ -819,6 +843,10 @@ function doMerge(a, b) {
       }
 
       score  += pts;
+      /* Arcade floating text VFX */
+      var mergedElem = ELEMENT_DB[newTier] || newElem;
+      var comboTxt = comboIndex > 0 ? ' x' + (comboIndex + 1) : '';
+      floatText(mid, '+' + pts + comboTxt, mergedElem.sym + ' – ' + mergedElem.name, newElem.col);
       /* Energy gain: design formula with combo bonus */
       var tierGain = calcEnergyGain(newTier);
       energy = Math.min(ENERGY_RULESET.maxEnergy || 100, energy + tierGain);
@@ -836,8 +864,6 @@ function doMerge(a, b) {
       saveGame();
       updateHUD();
     } catch(e) { console.error('Merge error:', e); }
-    if (mergeTimeout) { clearTimeout(mergeTimeout); mergeTimeout = null; }
-    merging = false;
   }, GAME_RULES.mergeAnimMs);
 }
 
