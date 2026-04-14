@@ -755,7 +755,7 @@ function checkMerges() {
       var d = BABYLON.Vector3.Distance(
         a.mesh.getAbsolutePosition(),
         b.mesh.getAbsolutePosition());
-      if (d <= (a.r + b.r) * 1.08) {
+      if (d <= (a.r + b.r) * 1.18) {
         doMerge(a, b);
         return;
       }
