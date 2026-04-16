@@ -574,6 +574,7 @@ function dropAtom(wx) {
   energy = Math.max(0, energy - dropCost);
 
   spawnAtom(dropQueue[0], wx, GAME_RULES.dropY, 0, true); // skipAnim — just drop
+  playDropSound();
   sessionStats.dropsCount++;
 
   // Hide ghost — the sweep animation replaces it
@@ -632,7 +633,9 @@ function onMoleculeFormed(recipe, molCenter) {
 
   currentLevel++;
   var rName = recipe.name || recipe.id;
+  playMoleculeSound();
   showLevelUpToast(rName);
+  setTimeout(playLevelUpSound, 400); // arpeggio after molecule sweep
 
   // Spawn special atom FROM molecule center (not mid-air)
   var highest = 0;
@@ -763,37 +766,147 @@ function checkMerges() {
   }
 }
 
-/* ── Procedural Merge Sound ────────────────────────────────── */
+/* ── Sound System ─────────────────────────────────────────── */
 var audioCtx = null;
+var sfxMuted = localStorage.getItem('sfxMuted') === '1';
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function toggleSfx() {
+  sfxMuted = !sfxMuted;
+  localStorage.setItem('sfxMuted', sfxMuted ? '1' : '0');
+  var btn = document.getElementById('sfx-toggle');
+  if (btn) btn.textContent = sfxMuted ? '🔇' : '🔊';
+}
+
+/* Merge pop — musical note based on tier, satisfying bubble pop */
 function playMergeSound(tier) {
+  if (sfxMuted) return;
   try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    var now = audioCtx.currentTime;
-    // Higher tier = lower, deeper pop; lower tier = bright chirp
-    var baseFreq = 600 - tier * 20;
-    // Pop oscillator
-    var osc = audioCtx.createOscillator();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(baseFreq + 200, now);
-    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.5, now + 0.15);
-    var gain = audioCtx.createGain();
-    gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-    osc.connect(gain).connect(audioCtx.destination);
-    osc.start(now);
-    osc.stop(now + 0.2);
-    // Sparkle overtone
-    var osc2 = audioCtx.createOscillator();
-    osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(baseFreq * 2.5, now);
-    osc2.frequency.exponentialRampToValueAtTime(baseFreq * 1.2, now + 0.12);
-    var g2 = audioCtx.createGain();
-    g2.gain.setValueAtTime(0.08, now);
-    g2.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-    osc2.connect(g2).connect(audioCtx.destination);
-    osc2.start(now);
-    osc2.stop(now + 0.12);
+    var ctx = ensureAudio(), now = ctx.currentTime;
+    // Pentatonic scale notes — each tier plays a pleasant note
+    var notes = [523,587,659,784,880,988,1047,1175,1319,1397,1568,1760,1976,2093,2349,2637,2794,3136];
+    var freq = notes[Math.min(tier, notes.length - 1)] || 523;
+
+    // Main bubble pop — sine with quick pitch drop
+    var o1 = ctx.createOscillator(); o1.type = 'sine';
+    o1.frequency.setValueAtTime(freq * 1.3, now);
+    o1.frequency.exponentialRampToValueAtTime(freq * 0.7, now + 0.08);
+    var g1 = ctx.createGain();
+    g1.gain.setValueAtTime(0.12, now);
+    g1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    o1.connect(g1).connect(ctx.destination);
+    o1.start(now); o1.stop(now + 0.15);
+
+    // Shimmery harmonic
+    var o2 = ctx.createOscillator(); o2.type = 'sine';
+    o2.frequency.setValueAtTime(freq * 2, now + 0.02);
+    o2.frequency.exponentialRampToValueAtTime(freq * 1.5, now + 0.1);
+    var g2 = ctx.createGain();
+    g2.gain.setValueAtTime(0.04, now + 0.02);
+    g2.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    o2.connect(g2).connect(ctx.destination);
+    o2.start(now + 0.02); o2.stop(now + 0.1);
+  } catch(e){}
+}
+
+/* Drop — soft thud */
+function playDropSound() {
+  if (sfxMuted) return;
+  try {
+    var ctx = ensureAudio(), now = ctx.currentTime;
+    var o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(180, now);
+    o.frequency.exponentialRampToValueAtTime(60, now + 0.08);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.10, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    o.connect(g).connect(ctx.destination);
+    o.start(now); o.stop(now + 0.1);
+  } catch(e){}
+}
+
+/* Combo — ascending chime */
+function playComboSound(comboN) {
+  if (sfxMuted) return;
+  try {
+    var ctx = ensureAudio(), now = ctx.currentTime;
+    var base = 660 + comboN * 110; // higher pitch for bigger combos
+    var o = ctx.createOscillator(); o.type = 'triangle';
+    o.frequency.setValueAtTime(base, now);
+    o.frequency.exponentialRampToValueAtTime(base * 1.5, now + 0.15);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.08, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    o.connect(g).connect(ctx.destination);
+    o.start(now); o.stop(now + 0.2);
+  } catch(e){}
+}
+
+/* Level up — triumphant 3-note arpeggio */
+function playLevelUpSound() {
+  if (sfxMuted) return;
+  try {
+    var ctx = ensureAudio(), now = ctx.currentTime;
+    var chord = [523, 659, 784]; // C E G major
+    for (var i = 0; i < 3; i++) {
+      var o = ctx.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(chord[i], now + i * 0.1);
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0, now + i * 0.1);
+      g.gain.linearRampToValueAtTime(0.10, now + i * 0.1 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.35);
+      o.connect(g).connect(ctx.destination);
+      o.start(now + i * 0.1); o.stop(now + i * 0.1 + 0.35);
+    }
+  } catch(e){}
+}
+
+/* Molecule formed — sparkly sweep */
+function playMoleculeSound() {
+  if (sfxMuted) return;
+  try {
+    var ctx = ensureAudio(), now = ctx.currentTime;
+    var o = ctx.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(400, now);
+    o.frequency.exponentialRampToValueAtTime(1600, now + 0.3);
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.08, now);
+    g.gain.linearRampToValueAtTime(0.12, now + 0.15);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    o.connect(g).connect(ctx.destination);
+    o.start(now); o.stop(now + 0.4);
+    // Shimmer
+    var o2 = ctx.createOscillator(); o2.type = 'triangle';
+    o2.frequency.setValueAtTime(800, now + 0.05);
+    o2.frequency.exponentialRampToValueAtTime(2400, now + 0.3);
+    var g2 = ctx.createGain();
+    g2.gain.setValueAtTime(0.04, now + 0.05);
+    g2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    o2.connect(g2).connect(ctx.destination);
+    o2.start(now + 0.05); o2.stop(now + 0.35);
+  } catch(e){}
+}
+
+/* Game over — descending sad tone */
+function playGameOverSound() {
+  if (sfxMuted) return;
+  try {
+    var ctx = ensureAudio(), now = ctx.currentTime;
+    var notes = [440, 392, 330]; // A G E descending
+    for (var i = 0; i < 3; i++) {
+      var o = ctx.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(notes[i], now + i * 0.2);
+      var g = ctx.createGain();
+      g.gain.setValueAtTime(0, now + i * 0.2);
+      g.gain.linearRampToValueAtTime(0.10, now + i * 0.2 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.2 + 0.5);
+      o.connect(g).connect(ctx.destination);
+      o.start(now + i * 0.2); o.stop(now + i * 0.2 + 0.5);
+    }
   } catch(e){}
 }
 
@@ -889,6 +1002,7 @@ function doMerge(a, b) {
       var comboTxt = comboIndex > 0 ? ' x' + (comboIndex + 1) : '';
       floatText(mid, mergedElem.name, pts + comboTxt, newElem.col, newTier);
       playMergeSound(newTier);
+      if (comboIndex > 0) playComboSound(comboIndex);
       /* Energy gain: design formula with combo bonus */
       var tierGain = calcEnergyGain(newTier);
       energy = Math.min(ENERGY_RULESET.maxEnergy || 100, energy + tierGain);
@@ -1224,6 +1338,7 @@ function checkGameOver() {
 
 function triggerGameOver() {
   gameIsOver = true;
+  playGameOverSound();
   try { localStorage.removeItem('atomMerge_save'); } catch(e){}
   disposeAllStormLines();
   document.getElementById('final-score').textContent = 'Score: ' + score;
@@ -1319,6 +1434,8 @@ function setupInput(cvs) {
 function updateHUD() {
   document.getElementById('score-val').textContent = score;
   document.getElementById('best-val').textContent  = bestScore;
+  var sb = document.getElementById('sfx-toggle');
+  if (sb) sb.textContent = sfxMuted ? '🔇' : '🔊';
   var maxE = ENERGY_RULESET.maxEnergy || 100;
   document.getElementById('energy-fill').style.width = Math.round(energy / maxE * 100) + '%';
   var ev = document.getElementById('energy-val');
