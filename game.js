@@ -763,10 +763,45 @@ function checkMerges() {
   }
 }
 
+/* ── Procedural Merge Sound ────────────────────────────────── */
+var audioCtx = null;
+function playMergeSound(tier) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    var now = audioCtx.currentTime;
+    // Higher tier = lower, deeper pop; lower tier = bright chirp
+    var baseFreq = 600 - tier * 20;
+    // Pop oscillator
+    var osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(baseFreq + 200, now);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.5, now + 0.15);
+    var gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.2);
+    // Sparkle overtone
+    var osc2 = audioCtx.createOscillator();
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(baseFreq * 2.5, now);
+    osc2.frequency.exponentialRampToValueAtTime(baseFreq * 1.2, now + 0.12);
+    var g2 = audioCtx.createGain();
+    g2.gain.setValueAtTime(0.08, now);
+    g2.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc2.connect(g2).connect(audioCtx.destination);
+    osc2.start(now);
+    osc2.stop(now + 0.12);
+  } catch(e){}
+}
+
 /* ── Arcade Floating Text VFX ──────────────────────────────── */
-function floatText(worldPos, line1, line2, color) {
+function floatText(worldPos, elemName, points, color, tier) {
   var el = document.createElement('div');
-  el.style.cssText = 'position:fixed;pointer-events:none;z-index:999;font-family:"Orbitron",sans-serif;text-align:center;white-space:nowrap;transition:none;';
+  var c = color || '#FFD700';
+  el.style.cssText = 'position:fixed;pointer-events:none;z-index:999;font-family:"Orbitron",sans-serif;text-align:center;white-space:nowrap;';
   var screenPos = BABYLON.Vector3.Project(worldPos,
     BABYLON.Matrix.Identity(),
     scene.getTransformMatrix(),
@@ -774,19 +809,25 @@ function floatText(worldPos, line1, line2, color) {
   el.style.left = screenPos.x + 'px';
   el.style.top = screenPos.y + 'px';
   el.style.transform = 'translate(-50%,-50%)';
-  el.innerHTML = '<div style="font-size:18px;font-weight:900;color:' + (color || '#FFD700') +
-    ';text-shadow:0 0 8px ' + (color || '#FFD700') + ',0 2px 4px rgba(0,0,0,0.8)">' + line1 + '</div>' +
-    (line2 ? '<div style="font-size:13px;font-weight:700;color:#fff;text-shadow:0 0 6px rgba(255,255,255,0.5),0 1px 3px rgba(0,0,0,0.9);margin-top:2px">' + line2 + '</div>' : '');
+  // Element name — big, glowing, atom-colored
+  el.innerHTML = '<div style="font-size:22px;font-weight:900;color:' + c +
+    ';text-shadow:0 0 12px ' + c + ',0 0 24px ' + c + ',0 2px 4px rgba(0,0,0,0.9);' +
+    'letter-spacing:2px;text-transform:uppercase">' + elemName + '</div>' +
+    '<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.7);' +
+    'text-shadow:0 0 6px ' + c + ',0 1px 2px rgba(0,0,0,0.8);margin-top:1px">+' + points + '</div>';
   document.body.appendChild(el);
   var startY = screenPos.y;
   var startT = performance.now();
-  var dur = 900;
+  var dur = 1000;
   function tick() {
     var p = (performance.now() - startT) / dur;
     if (p >= 1) { el.remove(); return; }
-    el.style.top = (startY - p * 70) + 'px';
-    el.style.opacity = (1 - p * p).toString();
-    el.style.transform = 'translate(-50%,-50%) scale(' + (1 + p * 0.3) + ')';
+    // Float up with slight deceleration
+    el.style.top = (startY - p * 80) + 'px';
+    // Scale: pop in then settle
+    var s = p < 0.1 ? (1 + p * 5) : (1.5 - p * 0.5);
+    el.style.opacity = (1 - p * p * p).toString();
+    el.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
@@ -843,10 +884,11 @@ function doMerge(a, b) {
       }
 
       score  += pts;
-      /* Arcade floating text VFX */
+      /* Arcade floating text + merge sound */
       var mergedElem = ELEMENT_DB[newTier] || newElem;
       var comboTxt = comboIndex > 0 ? ' x' + (comboIndex + 1) : '';
-      floatText(mid, '+' + pts + comboTxt, mergedElem.sym + ' – ' + mergedElem.name, newElem.col);
+      floatText(mid, mergedElem.name, pts + comboTxt, newElem.col, newTier);
+      playMergeSound(newTier);
       /* Energy gain: design formula with combo bonus */
       var tierGain = calcEnergyGain(newTier);
       energy = Math.min(ENERGY_RULESET.maxEnergy || 100, energy + tierGain);
