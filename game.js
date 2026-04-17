@@ -637,12 +637,16 @@ function onMoleculeFormed(recipe, molCenter) {
   showLevelUpToast(rName);
   setTimeout(playLevelUpSound, 400); // arpeggio after molecule sweep
 
-  // Spawn special atom FROM molecule center (not mid-air)
-  var highest = 0;
-  for (var i = 0; i < atoms.length; i++) {
-    if (atoms[i].tier > highest) highest = atoms[i].tier;
+  // Spawn special atom: recipe's highest ingredient tier + 1 (not random high tier)
+  var recipeMaxTier = 0;
+  if (recipe && recipe.inputs) {
+    for (var ri = 0; ri < recipe.inputs.length; ri++) {
+      for (var ti = 0; ti < ELEMENT_DB.length; ti++) {
+        if (ELEMENT_DB[ti].Z === recipe.inputs[ri].Z && ti > recipeMaxTier) recipeMaxTier = ti;
+      }
+    }
   }
-  var specialTier = Math.min(highest + 3, ELEMENT_DB.length - 1);
+  var specialTier = Math.min(recipeMaxTier + 1, ELEMENT_DB.length - 1);
   var spX = molCenter ? molCenter.x : (Math.random() - 0.5) * (CONTAINER.w - 2);
   var spY = molCenter ? molCenter.y : CONTAINER.h * 0.6;
   var sa = spawnAtom(specialTier, spX, spY, 0, true);

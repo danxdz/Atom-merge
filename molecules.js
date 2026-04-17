@@ -227,8 +227,14 @@ function triggerMolecule(recipe, matchedAtoms) {
     for (var bp = 0; bp < numByproducts; bp++) {
       (function(bpIdx) {
         try {
-          var deck = currentWorld.spawnDeck || [];
-          var bpTier = deck.length > 0 ? deck[Math.floor(Math.random() * deck.length)] : 1;
+          // Byproducts are recipe ingredient atoms (not random)
+          var ingTiers = (recipe.inputs || []).map(function(inp) {
+            for (var ti = 0; ti < ELEMENT_DB.length; ti++) {
+              if (ELEMENT_DB[ti].Z === inp.Z) return ti;
+            }
+            return 0;
+          });
+          var bpTier = ingTiers.length > 0 ? ingTiers[bpIdx % ingTiers.length] : 0;
           var ox = (Math.random() - 0.5) * 0.8;
           var oy = Math.random() * 0.3;
           var atom = spawnAtom(bpTier, center.x, center.y, 0, true);
