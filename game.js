@@ -36,10 +36,23 @@ function getActiveSpawnDeck() {
   var w = WORLDS_DATA[worldIdx];
   if (!w || !w.spawnDeck || w.spawnDeck.length === 0) return [0];
   var baseDeck = w.spawnDeck.slice();
-  // Every 2 molecule-levels, trim 1 bottom tier (6 levels → max 3 trimmed)
-  var tiersToRemove = Math.floor(currentLevel / 2);
-  tiersToRemove = Math.min(tiersToRemove, baseDeck.length - 1); // always keep at least 1
-  return baseDeck.slice(tiersToRemove);
+
+  // Always include atoms needed by ALL world recipes so you can always craft molecules
+  if (w.molecules && MOLECULES_DATA) {
+    for (var mi = 0; mi < w.molecules.length; mi++) {
+      var mol = null;
+      for (var ri = 0; ri < MOLECULES_DATA.length; ri++) {
+        if (MOLECULES_DATA[ri].id === w.molecules[mi]) { mol = MOLECULES_DATA[ri]; break; }
+      }
+      if (mol && mol.inputs) {
+        for (var ii = 0; ii < mol.inputs.length; ii++) {
+          var z = mol.inputs[ii].Z;
+          if (baseDeck.indexOf(z) === -1) baseDeck.push(z);
+        }
+      }
+    }
+  }
+  return baseDeck;
 }
 
 function getDropCost() {
