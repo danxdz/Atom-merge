@@ -113,6 +113,69 @@
       margin-top:6px;padding:10px 26px;background:#3355ee;border:none;
       border-radius:6px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;
     }
+
+    /* ── Arcade Scoreboard ──────────────────────── */
+    #scoreboard-overlay{
+      position:fixed;inset:0;display:none;flex-direction:column;
+      align-items:center;justify-content:center;
+      background:rgba(6,6,15,0.92);z-index:55;gap:0;
+    }
+    .sb-box{
+      background:rgba(0,0,0,0.7);border:2px solid #ffcc00;border-radius:12px;
+      padding:24px 32px;min-width:300px;max-width:380px;text-align:center;
+      box-shadow:0 0 30px rgba(255,204,0,0.15);
+    }
+    .sb-title{
+      font-size:22px;font-weight:900;color:#ffcc00;letter-spacing:3px;
+      text-transform:uppercase;margin-bottom:4px;
+      text-shadow:0 0 8px rgba(255,204,0,0.5);
+    }
+    .sb-subtitle{font-size:11px;opacity:0.4;margin-bottom:16px}
+    .sb-table{width:100%;border-collapse:collapse;margin:8px 0}
+    .sb-table td{padding:4px 6px;font-size:14px;font-family:'Courier New',monospace}
+    .sb-table .sb-rank{width:30px;color:#ffcc00;text-align:center;font-weight:700}
+    .sb-table .sb-name{color:#44ddff;letter-spacing:2px;font-weight:700;text-align:center;width:60px}
+    .sb-table .sb-pts{text-align:right;color:#fff;font-weight:600}
+    .sb-table .sb-world{font-size:11px;opacity:0.4;text-align:left;padding-left:8px}
+    .sb-table tr.sb-highlight td{color:#ff5;text-shadow:0 0 6px rgba(255,255,80,0.5)}
+    .sb-empty{font-size:13px;opacity:0.35;padding:20px 0}
+    .sb-close{
+      margin-top:16px;padding:8px 24px;background:transparent;border:1px solid #ffcc00;
+      border-radius:6px;color:#ffcc00;font-size:13px;cursor:pointer;letter-spacing:1px;
+    }
+    .sb-close:hover{background:rgba(255,204,0,0.1)}
+
+    /* ── Name Entry ──────────────────────── */
+    #name-entry{
+      position:fixed;inset:0;display:none;flex-direction:column;
+      align-items:center;justify-content:center;
+      background:rgba(6,6,15,0.92);z-index:60;gap:0;
+    }
+    .ne-box{
+      background:rgba(0,0,0,0.7);border:2px solid #ff5533;border-radius:12px;
+      padding:28px 36px;text-align:center;
+      box-shadow:0 0 30px rgba(255,85,51,0.2);
+    }
+    .ne-title{font-size:20px;font-weight:900;color:#ff5533;letter-spacing:2px;margin-bottom:2px}
+    .ne-score{font-size:32px;font-weight:900;color:#ffcc00;margin:8px 0;text-shadow:0 0 10px rgba(255,204,0,0.4)}
+    .ne-prompt{font-size:13px;opacity:0.5;margin-bottom:16px}
+    .ne-letters{display:flex;gap:12px;justify-content:center;margin:12px 0 20px}
+    .ne-letter{
+      width:48px;height:56px;background:rgba(255,255,255,0.05);border:2px solid #ffcc00;
+      border-radius:8px;display:flex;align-items:center;justify-content:center;
+      font-size:32px;font-weight:900;color:#44ddff;font-family:'Courier New',monospace;
+      letter-spacing:2px;cursor:pointer;user-select:none;
+      text-shadow:0 0 6px rgba(68,221,255,0.5);
+    }
+    .ne-letter:hover{border-color:#44ddff;background:rgba(68,221,255,0.1)}
+    .ne-hint{font-size:10px;opacity:0.3;margin-bottom:12px}
+    .ne-ok{
+      padding:10px 32px;background:#ffcc00;border:none;border-radius:6px;
+      color:#111;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;
+    }
+    .ne-ok:hover{background:#ffe044}
+    .hud-lb{cursor:pointer;opacity:0.7;font-size:14px}
+    .hud-lb:hover{opacity:1}
     #rbtn:hover{background:#4466ff}
 
     /* ── Debug ── */
@@ -131,6 +194,7 @@
   <div id="hud">
     <div class="hud-score"><span class="icon">🏆</span><span class="val" id="score-val">0</span></div>
     <div class="hud-best">BEST <span class="bv" id="best-val">0</span></div>
+    <span class="hud-lb" onclick="openScoreboard()" title="High Scores">📋</span>
     <div class="hud-world" id="hud-world" style="font-size:11px;opacity:0.55;white-space:nowrap;cursor:pointer" onclick="toggleCfg()" title="Click to change world">🌍 W1</div>
     <button id="sfx-toggle" onclick="toggleSfx()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#b0b0cc;font-size:13px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">🔊</button>
     <button id="cfg-toggle" onclick="toggleCfg()">⚙</button>
@@ -200,6 +264,32 @@
     <h1>⚠ Overflow!</h1>
     <p id="final-score">Score: 0</p>
     <button id="rbtn" onclick="restartGame()">Play Again</button>
+  </div>
+
+  <!-- Name Entry (arcade 3-letter) -->
+  <div id="name-entry">
+    <div class="ne-box">
+      <div class="ne-title">★ NEW HIGH SCORE ★</div>
+      <div class="ne-score" id="ne-score-val">0</div>
+      <div class="ne-prompt">ENTER YOUR INITIALS</div>
+      <div class="ne-letters">
+        <div class="ne-letter" id="ne-l0" onclick="cycleNameLetter(0)">A</div>
+        <div class="ne-letter" id="ne-l1" onclick="cycleNameLetter(1)">A</div>
+        <div class="ne-letter" id="ne-l2" onclick="cycleNameLetter(2)">A</div>
+      </div>
+      <div class="ne-hint">TAP letter to cycle • SCROLL to pick</div>
+      <button class="ne-ok" onclick="submitHighScore()">OK</button>
+    </div>
+  </div>
+
+  <!-- Scoreboard -->
+  <div id="scoreboard-overlay" onclick="closeScoreboard(event)">
+    <div class="sb-box" onclick="event.stopPropagation()">
+      <div class="sb-title">🏆 HIGH SCORES</div>
+      <div class="sb-subtitle">TOP 10 ALL TIME</div>
+      <div id="sb-body"></div>
+      <button class="sb-close" onclick="closeScoreboard()">CLOSE</button>
+    </div>
   </div>
 
   <div id="atom-count">atoms: 0</div>

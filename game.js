@@ -1353,13 +1353,131 @@ function checkGameOver() {
   }
 }
 
+/* ── Arcade High Score System ─────────────────────────────────── */
+var HIGH_SCORES_KEY = 'atomMerge_highScores';
+var MAX_SCORES = 10;
+var _nameLetters = [0, 0, 0]; // A=0, B=1 ... Z=25
+var _pendingScore = 0;
+var _highlightIdx = -1;
+
+function loadHighScores() {
+  try {
+    var raw = localStorage.getItem(HIGH_SCORES_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return [];
+}
+function saveHighScores(scores) {
+  try { localStorage.setItem(HIGH_SCORES_KEY, JSON.stringify(scores)); } catch(e) {}
+}
+function isHighScore(pts) {
+  var scores = loadHighScores();
+  if (scores.length < MAX_SCORES) return true;
+  return pts > scores[scores.length - 1].score;
+}
+function insertHighScore(name, pts) {
+  var scores = loadHighScores();
+  var w = WORLDS_DATA[worldIdx];
+  var entry = {
+    name: name,
+    score: pts,
+    world: w ? w.name : '???',
+    level: currentLevel + 1,
+    date: new Date().toISOString().slice(0, 10)
+  };
+  scores.push(entry);
+  scores.sort(function(a, b) { return b.score - a.score; });
+  if (scores.length > MAX_SCORES) scores = scores.slice(0, MAX_SCORES);
+  saveHighScores(scores);
+  // Find index of just-inserted entry for highlight
+  for (var i = 0; i < scores.length; i++) {
+    if (scores[i] === entry) return i;
+  }
+  return -1;
+}
+
+function cycleNameLetter(idx) {
+  _nameLetters[idx] = (_nameLetters[idx] + 1) % 26;
+  document.getElementById('ne-l' + idx).textContent = String.fromCharCode(65 + _nameLetters[idx]);
+  // Little click sound
+  if (typeof playDropSound === 'function') playDropSound();
+}
+
+// Scroll wheel on letters
+(function() {
+  for (var i = 0; i < 3; i++) {
+    (function(idx) {
+      var el = document.getElementById('ne-l' + idx);
+      if (!el) return;
+      el.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        var dir = e.deltaY > 0 ? 1 : -1;
+        _nameLetters[idx] = (_nameLetters[idx] + dir + 26) % 26;
+        el.textContent = String.fromCharCode(65 + _nameLetters[idx]);
+      }, { passive: false });
+    })(i);
+  }
+})();
+
+function submitHighScore() {
+  var name = '';
+  for (var i = 0; i < 3; i++) name += String.fromCharCode(65 + _nameLetters[i]);
+  var idx = insertHighScore(name, _pendingScore);
+  document.getElementById('name-entry').style.display = 'none';
+  _highlightIdx = idx;
+  openScoreboard();
+  // Also show game over behind
+  document.getElementById('final-score').textContent = 'Score: ' + _pendingScore;
+  document.getElementById('game-over').style.display = 'flex';
+  if (typeof playLevelUpSound === 'function') playLevelUpSound();
+}
+
+function openScoreboard() {
+  var scores = loadHighScores();
+  var body = document.getElementById('sb-body');
+  if (!scores.length) {
+    body.innerHTML = '<div class="sb-empty">NO SCORES YET — PLAY TO CLAIM #1!</div>';
+  } else {
+    var html = '<table class="sb-table">';
+    for (var i = 0; i < scores.length; i++) {
+      var s = scores[i];
+      var hl = (i === _highlightIdx) ? ' class="sb-highlight"' : '';
+      html += '<tr' + hl + '>';
+      html += '<td class="sb-rank">' + (i + 1) + '.</td>';
+      html += '<td class="sb-name">' + (s.name || '???') + '</td>';
+      html += '<td class="sb-pts">' + s.score.toLocaleString() + '</td>';
+      html += '<td class="sb-world">' + (s.world || '') + '</td>';
+      html += '</tr>';
+    }
+    html += '</table>';
+    body.innerHTML = html;
+  }
+  _highlightIdx = -1;
+  document.getElementById('scoreboard-overlay').style.display = 'flex';
+}
+
+function closeScoreboard(e) {
+  if (e && e.target !== document.getElementById('scoreboard-overlay')) return;
+  document.getElementById('scoreboard-overlay').style.display = 'none';
+}
+
 function triggerGameOver() {
   gameIsOver = true;
   playGameOverSound();
   try { localStorage.removeItem('atomMerge_save'); } catch(e){}
   disposeAllStormLines();
-  document.getElementById('final-score').textContent = 'Score: ' + score;
-  document.getElementById('game-over').style.display = 'flex';
+
+  // Check for high score — show name entry or regular game over
+  if (score > 0 && isHighScore(score)) {
+    _pendingScore = score;
+    _nameLetters = [0, 0, 0];
+    for (var i = 0; i < 3; i++) document.getElementById('ne-l' + i).textContent = 'A';
+    document.getElementById('ne-score-val').textContent = score.toLocaleString();
+    document.getElementById('name-entry').style.display = 'flex';
+  } else {
+    document.getElementById('final-score').textContent = 'Score: ' + score;
+    document.getElementById('game-over').style.display = 'flex';
+  }
 }
 
 function restartGame() {
