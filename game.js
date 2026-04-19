@@ -260,8 +260,8 @@ function buildScene() {
     if (cWorld.defaultContactMaterial) {
       cWorld.defaultContactMaterial.restitution = 0.02;
       cWorld.defaultContactMaterial.friction = 0.8;
-      cWorld.defaultContactMaterial.contactEquationStiffness = 1e6;
-      cWorld.defaultContactMaterial.contactEquationRelaxation = 4;
+      cWorld.defaultContactMaterial.contactEquationStiffness = 1e7;
+      cWorld.defaultContactMaterial.contactEquationRelaxation = 3;
     }
   }
 
@@ -775,7 +775,7 @@ function checkMerges() {
       var d = BABYLON.Vector3.Distance(
         a.mesh.getAbsolutePosition(),
         b.mesh.getAbsolutePosition());
-      if (d <= (a.r + b.r) * 1.25) {
+      if (d <= (a.r + b.r) * 1.08) {
         doMerge(a, b);
         return;
       }
