@@ -150,6 +150,7 @@ async function boot() {
   setupInput(canvas);
   populateWorldSelector();
   buildLegend();
+  loadHighScores(); // pre-fetch server scores into cache
 
   var lastTick = 0;
 
@@ -1354,46 +1355,51 @@ function checkGameOver() {
 }
 
 /* ── Arcade High Score System ─────────────────────────────────── */
-var HIGH_SCORES_KEY = 'atomMerge_highScores';
 var MAX_SCORES = 10;
 var _nameLetters = [0, 0, 0]; // A=0, B=1 ... Z=25
 var _pendingScore = 0;
 var _highlightIdx = -1;
+var _cachedScores = []; // local cache of server scores
 
-function loadHighScores() {
-  try {
-    var raw = localStorage.getItem(HIGH_SCORES_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch(e) {}
-  return [];
-}
-function saveHighScores(scores) {
-  try { localStorage.setItem(HIGH_SCORES_KEY, JSON.stringify(scores)); } catch(e) {}
+// Fetch scores from server (with localStorage fallback)
+function loadHighScores(cb) {
+  fetch('/api/scores').then(function(r) { return r.json(); }).then(function(scores) {
+    _cachedScores = scores || [];
+    try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
+    if (cb) cb(_cachedScores);
+  }).catch(function() {
+    // Fallback to localStorage if server unreachable
+    try { var raw = localStorage.getItem('atomMerge_highScores'); if (raw) _cachedScores = JSON.parse(raw); } catch(e) {}
+    if (cb) cb(_cachedScores);
+  });
 }
 function isHighScore(pts) {
-  var scores = loadHighScores();
-  if (scores.length < MAX_SCORES) return true;
-  return pts > scores[scores.length - 1].score;
+  if (_cachedScores.length < MAX_SCORES) return true;
+  return pts > _cachedScores[_cachedScores.length - 1].score;
 }
-function insertHighScore(name, pts) {
-  var scores = loadHighScores();
+function insertHighScore(name, pts, cb) {
   var w = WORLDS_DATA[worldIdx];
-  var entry = {
-    name: name,
-    score: pts,
-    world: w ? w.name : '???',
-    level: currentLevel + 1,
-    date: new Date().toISOString().slice(0, 10)
-  };
-  scores.push(entry);
-  scores.sort(function(a, b) { return b.score - a.score; });
-  if (scores.length > MAX_SCORES) scores = scores.slice(0, MAX_SCORES);
-  saveHighScores(scores);
-  // Find index of just-inserted entry for highlight
-  for (var i = 0; i < scores.length; i++) {
-    if (scores[i] === entry) return i;
-  }
-  return -1;
+  var body = { name: name, score: pts, world: w ? w.name : '???' };
+  fetch('/api/scores', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  }).then(function(r) { return r.json(); }).then(function(data) {
+    _cachedScores = data.scores || [];
+    try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
+    var rank = (data.rank || 1) - 1;
+    if (cb) cb(rank);
+  }).catch(function() {
+    // Offline fallback — save locally
+    var entry = { name: name, score: pts, world: w ? w.name : '???', date: new Date().toISOString() };
+    _cachedScores.push(entry);
+    _cachedScores.sort(function(a, b) { return b.score - a.score; });
+    _cachedScores = _cachedScores.slice(0, MAX_SCORES);
+    try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
+    var rank = -1;
+    for (var i = 0; i < _cachedScores.length; i++) { if (_cachedScores[i] === entry) { rank = i; break; } }
+    if (cb) cb(rank);
+  });
 }
 
 function cycleNameLetter(idx) {
@@ -1422,38 +1428,40 @@ function cycleNameLetter(idx) {
 function submitHighScore() {
   var name = '';
   for (var i = 0; i < 3; i++) name += String.fromCharCode(65 + _nameLetters[i]);
-  var idx = insertHighScore(name, _pendingScore);
-  document.getElementById('name-entry').style.display = 'none';
-  _highlightIdx = idx;
-  openScoreboard();
-  // Also show game over behind
-  document.getElementById('final-score').textContent = 'Score: ' + _pendingScore;
-  document.getElementById('game-over').style.display = 'flex';
-  if (typeof playLevelUpSound === 'function') playLevelUpSound();
+  insertHighScore(name, _pendingScore, function(idx) {
+    document.getElementById('name-entry').style.display = 'none';
+    _highlightIdx = idx;
+    openScoreboard();
+    document.getElementById('final-score').textContent = 'Score: ' + _pendingScore;
+    document.getElementById('game-over').style.display = 'flex';
+    if (typeof playLevelUpSound === 'function') playLevelUpSound();
+  });
 }
 
 function openScoreboard() {
-  var scores = loadHighScores();
   var body = document.getElementById('sb-body');
-  if (!scores.length) {
-    body.innerHTML = '<div class="sb-empty">NO SCORES YET — PLAY TO CLAIM #1!</div>';
-  } else {
-    var html = '<table class="sb-table">';
-    for (var i = 0; i < scores.length; i++) {
-      var s = scores[i];
-      var hl = (i === _highlightIdx) ? ' class="sb-highlight"' : '';
-      html += '<tr' + hl + '>';
-      html += '<td class="sb-rank">' + (i + 1) + '.</td>';
-      html += '<td class="sb-name">' + (s.name || '???') + '</td>';
-      html += '<td class="sb-pts">' + s.score.toLocaleString() + '</td>';
-      html += '<td class="sb-world">' + (s.world || '') + '</td>';
-      html += '</tr>';
-    }
-    html += '</table>';
-    body.innerHTML = html;
-  }
-  _highlightIdx = -1;
+  body.innerHTML = '<div class="sb-empty">LOADING...</div>';
   document.getElementById('scoreboard-overlay').style.display = 'flex';
+  loadHighScores(function(scores) {
+    if (!scores.length) {
+      body.innerHTML = '<div class="sb-empty">NO SCORES YET — PLAY TO CLAIM #1!</div>';
+    } else {
+      var html = '<table class="sb-table">';
+      for (var i = 0; i < scores.length; i++) {
+        var s = scores[i];
+        var hl = (i === _highlightIdx) ? ' class="sb-highlight"' : '';
+        html += '<tr' + hl + '>';
+        html += '<td class="sb-rank">' + (i + 1) + '.</td>';
+        html += '<td class="sb-name">' + (s.name || '???') + '</td>';
+        html += '<td class="sb-pts">' + s.score.toLocaleString() + '</td>';
+        html += '<td class="sb-world">' + (s.world || '') + '</td>';
+        html += '</tr>';
+      }
+      html += '</table>';
+      body.innerHTML = html;
+    }
+    _highlightIdx = -1;
+  });
 }
 
 function closeScoreboard(e) {
