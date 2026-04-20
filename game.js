@@ -1355,6 +1355,7 @@ function checkGameOver() {
 }
 
 /* ── Arcade High Score System ─────────────────────────────────── */
+var SCORES_API = 'https://atom-merge-scores.onrender.com'; // scores server URL
 var MAX_SCORES = 10;
 var _nameLetters = [0, 0, 0]; // A=0, B=1 ... Z=25
 var _pendingScore = 0;
@@ -1363,7 +1364,7 @@ var _cachedScores = []; // local cache of server scores
 
 // Fetch scores from server (with localStorage fallback)
 function loadHighScores(cb) {
-  fetch('/api/scores').then(function(r) { return r.json(); }).then(function(scores) {
+  fetch(SCORES_API + '/api/scores').then(function(r) { return r.json(); }).then(function(scores) {
     _cachedScores = scores || [];
     try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
     if (cb) cb(_cachedScores);
@@ -1380,7 +1381,7 @@ function isHighScore(pts) {
 function insertHighScore(name, pts, cb) {
   var w = WORLDS_DATA[worldIdx];
   var body = { name: name, score: pts, world: w ? w.name : '???' };
-  fetch('/api/scores', {
+  fetch(SCORES_API + '/api/scores', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)

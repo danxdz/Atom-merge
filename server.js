@@ -1,58 +1,44 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-
 const app = express();
+const PORT = process.env.PORT || 3001;
+const FILE = path.join(__dirname, 'scores.json');
+
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
 
-const SCORES_FILE = path.join(__dirname, 'scores.json');
-const MAX_SCORES = 10;
+// CORS — allow any origin (static site calls this)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 
-function loadScores() {
-  try {
-    if (fs.existsSync(SCORES_FILE)) return JSON.parse(fs.readFileSync(SCORES_FILE, 'utf8'));
-  } catch (e) { console.error('Error loading scores:', e); }
-  return [];
+function readScores() {
+  try { return JSON.parse(fs.readFileSync(FILE, 'utf8')); }
+  catch { return []; }
 }
+function writeScores(s) { fs.writeFileSync(FILE, JSON.stringify(s, null, 2)); }
 
-function saveScores(scores) {
-  fs.writeFileSync(SCORES_FILE, JSON.stringify(scores, null, 2));
-}
-
-// GET top 10 scores
+// GET top 10
 app.get('/api/scores', (req, res) => {
-  res.json(loadScores());
+  res.json(readScores());
 });
 
-// POST a new score
+// POST new score
 app.post('/api/scores', (req, res) => {
-  const { name, score, world } = req.body;
-
-  // Validate
-  if (!name || typeof name !== 'string' || name.length < 1 || name.length > 3) {
-    return res.status(400).json({ error: 'Name must be 1-3 characters' });
-  }
-  if (typeof score !== 'number' || score < 0 || score > 999999) {
-    return res.status(400).json({ error: 'Invalid score' });
-  }
-
-  const entry = {
-    name: name.toUpperCase().slice(0, 3),
-    score: Math.floor(score),
-    world: (world || 'w1').slice(0, 20),
-    date: new Date().toISOString()
-  };
-
-  const scores = loadScores();
-  scores.push(entry);
+  const { name, score, world } = req.body || {};
+  if (!name || typeof score !== 'number') return res.status(400).json({ error: 'bad' });
+  const sanitized = String(name).replace(/[^A-Z]/gi, '').slice(0, 3).toUpperCase() || 'AAA';
+  let scores = readScores();
+  scores.push({ name: sanitized, score, world: String(world || '').slice(0, 20), date: new Date().toISOString() });
   scores.sort((a, b) => b.score - a.score);
-  const top = scores.slice(0, MAX_SCORES);
-  saveScores(top);
-
-  const rank = top.findIndex(s => s.date === entry.date) + 1;
-  res.json({ rank, scores: top });
+  scores = scores.slice(0, 10);
+  writeScores(scores);
+  const idx = scores.findIndex(s => s.name === sanitized && s.score === score);
+  res.json({ rank: idx, scores });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Atom Merge server running on port ${PORT}`));
+app.listen(PORT, () => console.log('Scores API on port ' + PORT));
