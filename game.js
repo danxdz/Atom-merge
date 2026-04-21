@@ -37,18 +37,19 @@ function getActiveSpawnDeck() {
   if (!w || !w.spawnDeck || w.spawnDeck.length === 0) return [0];
   var baseDeck = w.spawnDeck.slice();
 
-  // Always include atoms needed by ALL world recipes so you can always craft molecules
-  if (w.molecules && MOLECULES_DATA) {
-    for (var mi = 0; mi < w.molecules.length; mi++) {
-      var mol = null;
-      for (var ri = 0; ri < MOLECULES_DATA.length; ri++) {
-        if (MOLECULES_DATA[ri].id === w.molecules[mi]) { mol = MOLECULES_DATA[ri]; break; }
-      }
-      if (mol && mol.inputs) {
-        for (var ii = 0; ii < mol.inputs.length; ii++) {
-          var z = mol.inputs[ii].Z;
-          if (baseDeck.indexOf(z) === -1) baseDeck.push(z);
+  // Only include atoms needed by CURRENT level's recipe (not all recipes)
+  var activeId = getTargetRecipeId();
+  if (activeId && MOLECULES_DATA) {
+    for (var ri = 0; ri < MOLECULES_DATA.length; ri++) {
+      if (MOLECULES_DATA[ri].id === activeId) {
+        var mol = MOLECULES_DATA[ri];
+        if (mol.inputs) {
+          for (var ii = 0; ii < mol.inputs.length; ii++) {
+            var z = mol.inputs[ii].Z;
+            if (baseDeck.indexOf(z) === -1) baseDeck.push(z);
+          }
         }
+        break;
       }
     }
   }
@@ -1355,7 +1356,7 @@ function checkGameOver() {
 }
 
 /* ── Arcade High Score System ─────────────────────────────────── */
-var SCORES_API = 'https://atom-merge-scores.onrender.com'; // scores server URL
+var SCORES_API = ''; // set to 'https://atom-merge-scores.onrender.com' once scores server is deployed
 var MAX_SCORES = 10;
 var _nameLetters = [0, 0, 0]; // A=0, B=1 ... Z=25
 var _pendingScore = 0;
@@ -1364,6 +1365,7 @@ var _cachedScores = []; // local cache of server scores
 
 // Fetch scores from server (with localStorage fallback)
 function loadHighScores(cb) {
+  if (!SCORES_API) { try { var raw = localStorage.getItem('atomMerge_highScores'); if (raw) _cachedScores = JSON.parse(raw); } catch(e) {} if (cb) cb(_cachedScores); return; }
   fetch(SCORES_API + '/api/scores').then(function(r) { return r.json(); }).then(function(scores) {
     _cachedScores = scores || [];
     try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
@@ -1378,9 +1380,20 @@ function isHighScore(pts) {
   if (_cachedScores.length < MAX_SCORES) return true;
   return pts > _cachedScores[_cachedScores.length - 1].score;
 }
+function _localInsert(body, cb) {
+  var entry = { name: body.name, score: body.score, world: body.world, date: new Date().toISOString() };
+  _cachedScores.push(entry);
+  _cachedScores.sort(function(a, b) { return b.score - a.score; });
+  _cachedScores = _cachedScores.slice(0, MAX_SCORES);
+  try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
+  var rank = -1;
+  for (var i = 0; i < _cachedScores.length; i++) { if (_cachedScores[i] === entry) { rank = i; break; } }
+  if (cb) cb(rank);
+}
 function insertHighScore(name, pts, cb) {
   var w = WORLDS_DATA[worldIdx];
   var body = { name: name, score: pts, world: w ? w.name : '???' };
+  if (!SCORES_API) { _localInsert(body, cb); return; }
   fetch(SCORES_API + '/api/scores', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
