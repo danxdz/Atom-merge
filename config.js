@@ -136,13 +136,13 @@ function applyWorld(idx) {
     if (orig) slice.push(Object.assign({}, orig));
   }
 
-  // Renormalize radii: sqrt curve from rMin to rMax (compresses high tiers)
-  var rMin = 0.30, rMax = 1.50;
+  // Renormalize radii: linear curve from rMin to rMax (equal step per tier)
+  var rMin = 0.30, rMax = 1.40;
   var n = slice.length;
   for (var i = 0; i < n; i++) {
     slice[i].tier = i;  // local tier within this world
     if (n > 1) {
-      var t = Math.sqrt(i / (n - 1)); // sqrt curve — early tiers grow fast, high tiers compress
+      var t = i / (n - 1); // linear — equal radius step per tier
       slice[i].r = parseFloat((rMin + (rMax - rMin) * t).toFixed(2));
     } else {
       slice[i].r = rMin;
