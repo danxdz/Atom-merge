@@ -1338,7 +1338,7 @@ function checkGameOver() {
 }
 
 /* ── Arcade High Score System ─────────────────────────────────── */
-var SCORES_API = ''; // set to 'https://atom-merge-scores.onrender.com' once scores server is deployed
+var SCORES_API = 'https://atom-merge-scores.onrender.com';
 var MAX_SCORES = 10;
 var _nameLetters = [0, 0, 0]; // A=0, B=1 ... Z=25
 var _pendingScore = 0;
