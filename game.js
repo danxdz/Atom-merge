@@ -35,25 +35,7 @@ function world()       { return WORLDS[worldIdx]; }
 function getActiveSpawnDeck() {
   var w = WORLDS_DATA[worldIdx];
   if (!w || !w.spawnDeck || w.spawnDeck.length === 0) return [0];
-  var baseDeck = w.spawnDeck.slice();
-
-  // Only include atoms needed by CURRENT level's recipe (not all recipes)
-  var activeId = getTargetRecipeId();
-  if (activeId && MOLECULES_DATA) {
-    for (var ri = 0; ri < MOLECULES_DATA.length; ri++) {
-      if (MOLECULES_DATA[ri].id === activeId) {
-        var mol = MOLECULES_DATA[ri];
-        if (mol.inputs) {
-          for (var ii = 0; ii < mol.inputs.length; ii++) {
-            var z = mol.inputs[ii].Z;
-            if (baseDeck.indexOf(z) === -1) baseDeck.push(z);
-          }
-        }
-        break;
-      }
-    }
-  }
-  return baseDeck;
+  return w.spawnDeck.slice(); // strict 5 atoms only — no injection
 }
 
 function getDropCost() {
