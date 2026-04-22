@@ -134,6 +134,7 @@ async function boot() {
   populateWorldSelector();
   buildLegend();
   loadHighScores(); // pre-fetch server scores into cache
+  checkServerStatus(); // ping scores server
 
   var lastTick = 0;
 
@@ -1344,6 +1345,19 @@ var _nameLetters = [0, 0, 0]; // A=0, B=1 ... Z=25
 var _pendingScore = 0;
 var _highlightIdx = -1;
 var _cachedScores = []; // local cache of server scores
+
+// Server status indicator
+function checkServerStatus() {
+  var el = document.getElementById('server-status');
+  if (!el) return;
+  if (!SCORES_API) { el.textContent = '⬤'; el.style.color = '#666'; el.title = 'Score server disabled'; return; }
+  fetch(SCORES_API + '/api/scores', { method: 'GET' }).then(function(r) {
+    if (r.ok) { el.textContent = '⬤'; el.style.color = '#44ff88'; el.title = 'Score server online'; }
+    else { el.textContent = '⬤'; el.style.color = '#ff4444'; el.title = 'Score server error (' + r.status + ')'; }
+  }).catch(function() {
+    el.textContent = '⬤'; el.style.color = '#ff4444'; el.title = 'Score server offline';
+  });
+}
 
 // Fetch scores from server (with localStorage fallback)
 function loadHighScores(cb) {

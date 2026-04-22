@@ -137,7 +137,7 @@ function applyWorld(idx) {
   }
 
   // Renormalize radii: linear curve from rMin to rMax (equal step per tier)
-  var rMin = 0.30, rMax = 1.40;
+  var rMin = 0.40, rMax = 1.60;
   var n = slice.length;
   for (var i = 0; i < n; i++) {
     slice[i].tier = i;  // local tier within this world
