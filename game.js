@@ -245,8 +245,8 @@ function buildScene() {
     if (cWorld.defaultContactMaterial) {
       cWorld.defaultContactMaterial.restitution = 0.02;
       cWorld.defaultContactMaterial.friction = 0.8;
-      cWorld.defaultContactMaterial.contactEquationStiffness = 1e7;
-      cWorld.defaultContactMaterial.contactEquationRelaxation = 3;
+      cWorld.defaultContactMaterial.contactEquationStiffness = 1e8;
+      cWorld.defaultContactMaterial.contactEquationRelaxation = 4;
     }
   }
 
@@ -747,6 +747,7 @@ function wakeNearby(x, y, radius) {
 /* ── Merge Detection ────────────────────────────────────────── */
 function checkMerges() {
   if (gameIsOver) return;
+  var pairs = [];
 
   for (var i = 0; i < atoms.length; i++) {
     var a = atoms[i];
@@ -760,11 +761,16 @@ function checkMerges() {
       var d = BABYLON.Vector3.Distance(
         a.mesh.getAbsolutePosition(),
         b.mesh.getAbsolutePosition());
-      if (d <= (a.r + b.r) * 1.08) {
-        doMerge(a, b);
-        return;
+      if (d <= (a.r + b.r) * 1.15) {
+        pairs.push([a, b]);
       }
     }
+  }
+  // Process all merge pairs — mark both atoms immediately
+  for (var k = 0; k < pairs.length; k++) {
+    var p = pairs[k];
+    if (p[0].merging || p[1].merging) continue; // already claimed
+    doMerge(p[0], p[1]);
   }
 }
 
@@ -1438,13 +1444,15 @@ function cycleNameLetter(idx) {
 function submitHighScore() {
   var name = '';
   for (var i = 0; i < 3; i++) name += String.fromCharCode(65 + _nameLetters[i]);
+  // Hide name entry immediately — don't block on server
+  document.getElementById('name-entry').style.display = 'none';
+  document.getElementById('final-score').textContent = 'Score: ' + _pendingScore;
+  document.getElementById('game-over').style.display = 'flex';
+  if (typeof playLevelUpSound === 'function') playLevelUpSound();
+  // Submit in background — show scoreboard when ready
   insertHighScore(name, _pendingScore, function(idx) {
-    document.getElementById('name-entry').style.display = 'none';
     _highlightIdx = idx;
     openScoreboard();
-    document.getElementById('final-score').textContent = 'Score: ' + _pendingScore;
-    document.getElementById('game-over').style.display = 'flex';
-    if (typeof playLevelUpSound === 'function') playLevelUpSound();
   });
 }
 
