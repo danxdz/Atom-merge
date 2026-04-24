@@ -1345,43 +1345,87 @@ function checkGameOver() {
 }
 
 /* ── Arcade High Score System ─────────────────────────────────── */
-var SCORES_API = 'https://atom-merge-scores.onrender.com';
+// ── Supabase Global Leaderboard ──
+var SUPA_URL = 'https://xuphharjjxepynnlhbcw.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1cGhoYXJqanhlcHlubmxoYmN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMzEyOTYsImV4cCI6MjA5MjYwNzI5Nn0.KrDiMGMkqyqHlruy3iQUs4wQCcGkPT8Ej7tRIP_lkAw';
 var MAX_SCORES = 10;
-var _nameLetters = [0, 0, 0]; // A=0, B=1 ... Z=25
+var _nameLetters = [0, 0, 0];
 var _pendingScore = 0;
 var _highlightIdx = -1;
-var _cachedScores = []; // local cache of server scores
+var _cachedScores = [];
+
+function _supaHeaders() {
+  return { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+}
 
 // Server status indicator
 function checkServerStatus() {
   var el = document.getElementById('server-status');
   if (!el) return;
-  if (!SCORES_API) { el.textContent = '⬤'; el.style.color = '#666'; el.title = 'Score server disabled'; return; }
-  fetch(SCORES_API + '/api/scores', { method: 'GET' }).then(function(r) {
-    if (r.ok) { el.textContent = '⬤'; el.style.color = '#44ff88'; el.title = 'Score server online'; }
-    else { el.textContent = '⬤'; el.style.color = '#ff4444'; el.title = 'Score server error (' + r.status + ')'; }
+  if (!SUPA_URL) { el.textContent = '⬤'; el.style.color = '#666'; el.title = 'Score server disabled'; return; }
+  fetch(SUPA_URL + '/rest/v1/scores?select=id&limit=1', { headers: _supaHeaders() }).then(function(r) {
+    if (r.ok) { el.textContent = '⬤'; el.style.color = '#44ff88'; el.title = 'Leaderboard online (Supabase)'; }
+    else { el.textContent = '⬤'; el.style.color = '#ff4444'; el.title = 'Leaderboard error (' + r.status + ')'; }
   }).catch(function() {
-    el.textContent = '⬤'; el.style.color = '#ff4444'; el.title = 'Score server offline';
+    el.textContent = '⬤'; el.style.color = '#ff4444'; el.title = 'Leaderboard offline';
   });
 }
 
-// Fetch scores from server (with localStorage fallback)
+// Fetch top 10 scores from Supabase
 function loadHighScores(cb) {
-  if (!SCORES_API) { try { var raw = localStorage.getItem('atomMerge_highScores'); if (raw) _cachedScores = JSON.parse(raw); } catch(e) {} if (cb) cb(_cachedScores); return; }
-  fetch(SCORES_API + '/api/scores').then(function(r) { return r.json(); }).then(function(scores) {
-    _cachedScores = scores || [];
+  if (!SUPA_URL) { _loadLocal(cb); return; }
+  fetch(SUPA_URL + '/rest/v1/scores?select=name,score,world,created_at&order=score.desc&limit=' + MAX_SCORES, {
+    headers: _supaHeaders()
+  }).then(function(r) { return r.json(); }).then(function(rows) {
+    _cachedScores = (rows || []).map(function(r) { return { name: r.name, score: r.score, world: r.world || '', date: r.created_at }; });
     try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
     if (cb) cb(_cachedScores);
   }).catch(function() {
-    // Fallback to localStorage if server unreachable
-    try { var raw = localStorage.getItem('atomMerge_highScores'); if (raw) _cachedScores = JSON.parse(raw); } catch(e) {}
-    if (cb) cb(_cachedScores);
+    _loadLocal(cb);
   });
+}
+function _loadLocal(cb) {
+  try { var raw = localStorage.getItem('atomMerge_highScores'); if (raw) _cachedScores = JSON.parse(raw); } catch(e) {}
+  if (cb) cb(_cachedScores);
 }
 function isHighScore(pts) {
   if (_cachedScores.length < MAX_SCORES) return true;
   return pts > _cachedScores[_cachedScores.length - 1].score;
 }
+
+function insertHighScore(name, pts, cb) {
+  var w = WORLDS_DATA[worldIdx];
+  var worldName = w ? w.name : '???';
+  var body = { name: name, score: pts, world: worldName };
+
+  if (!SUPA_URL) { _localInsert(body, cb); return; }
+
+  // Insert into Supabase then re-fetch top 10
+  fetch(SUPA_URL + '/rest/v1/scores', {
+    method: 'POST',
+    headers: _supaHeaders(),
+    body: JSON.stringify(body)
+  }).then(function(r) {
+    if (!r.ok) throw new Error('insert failed');
+    // Re-fetch leaderboard to get accurate ranking
+    return fetch(SUPA_URL + '/rest/v1/scores?select=name,score,world,created_at&order=score.desc&limit=' + MAX_SCORES, {
+      headers: _supaHeaders()
+    });
+  }).then(function(r) { return r.json(); }).then(function(rows) {
+    _cachedScores = (rows || []).map(function(r) { return { name: r.name, score: r.score, world: r.world || '', date: r.created_at }; });
+    try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
+    // Find rank of this score
+    var rank = -1;
+    for (var i = 0; i < _cachedScores.length; i++) {
+      if (_cachedScores[i].name === name && _cachedScores[i].score === pts) { rank = i; break; }
+    }
+    if (cb) cb(rank);
+  }).catch(function() {
+    // Offline fallback
+    _localInsert(body, cb);
+  });
+}
+
 function _localInsert(body, cb) {
   var entry = { name: body.name, score: body.score, world: body.world, date: new Date().toISOString() };
   _cachedScores.push(entry);
@@ -1391,31 +1435,6 @@ function _localInsert(body, cb) {
   var rank = -1;
   for (var i = 0; i < _cachedScores.length; i++) { if (_cachedScores[i] === entry) { rank = i; break; } }
   if (cb) cb(rank);
-}
-function insertHighScore(name, pts, cb) {
-  var w = WORLDS_DATA[worldIdx];
-  var body = { name: name, score: pts, world: w ? w.name : '???' };
-  if (!SCORES_API) { _localInsert(body, cb); return; }
-  fetch(SCORES_API + '/api/scores', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  }).then(function(r) { return r.json(); }).then(function(data) {
-    _cachedScores = data.scores || [];
-    try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
-    var rank = (data.rank || 1) - 1;
-    if (cb) cb(rank);
-  }).catch(function() {
-    // Offline fallback — save locally
-    var entry = { name: name, score: pts, world: w ? w.name : '???', date: new Date().toISOString() };
-    _cachedScores.push(entry);
-    _cachedScores.sort(function(a, b) { return b.score - a.score; });
-    _cachedScores = _cachedScores.slice(0, MAX_SCORES);
-    try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
-    var rank = -1;
-    for (var i = 0; i < _cachedScores.length; i++) { if (_cachedScores[i] === entry) { rank = i; break; } }
-    if (cb) cb(rank);
-  });
 }
 
 function cycleNameLetter(idx) {
