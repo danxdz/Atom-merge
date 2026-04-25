@@ -1634,20 +1634,84 @@ function updateHUD() {
   if (wl && WORLDS_DATA[worldIdx]) {
     var targetId = getTargetRecipeId();
     var targetLabel = '';
+    var targetRecipe = null;
     if (targetId) {
       for (var mi = 0; mi < MOLECULES_DATA.length; mi++) {
         if (MOLECULES_DATA[mi].id === targetId) {
-          var tr = MOLECULES_DATA[mi];
-          targetLabel = tr.name || tr.inputs.map(function(x){return x.sym;}).join('+');
+          targetRecipe = MOLECULES_DATA[mi];
+          targetLabel = targetRecipe.name || targetRecipe.inputs.map(function(x){return x.sym;}).join('+');
           break;
         }
       }
     }
-    wl.textContent = '\u{1F30D} ' + WORLDS_DATA[worldIdx].label + '  Lv.' + (currentLevel + 1) +
-      (targetLabel ? ' \u{1F3AF}' + targetLabel : ' \u2713');
+    wl.innerHTML = '\u{1F30D} ' + WORLDS_DATA[worldIdx].label + '  Lv.' + (currentLevel + 1) +
+      (targetLabel ? ' <span class="target-mol" onclick="showMoleculeInfo(event)">\u{1F3AF}' + targetLabel + '</span>' : ' \u2713');
   }
   var dc = document.getElementById('drop-cost');
   if (dc) dc.textContent = '-' + getDropCost() + '⚡';
+}
+
+function showMoleculeInfo(e) {
+  if (e) e.stopPropagation();
+  var popup = document.getElementById('mol-info-popup');
+  if (!popup) return;
+
+  var targetId = getTargetRecipeId();
+  if (!targetId) { popup.style.display = 'none'; return; }
+
+  var recipe = null;
+  for (var i = 0; i < MOLECULES_DATA.length; i++) {
+    if (MOLECULES_DATA[i].id === targetId) { recipe = MOLECULES_DATA[i]; break; }
+  }
+  if (!recipe) { popup.style.display = 'none'; return; }
+
+  // Build atom balls HTML
+  var atomsHtml = '';
+  var atomNames = [];
+  for (var j = 0; j < recipe.inputs.length; j++) {
+    var inp = recipe.inputs[j];
+    var col = '#888';
+    var eName = inp.sym;
+    for (var k = 0; k < ELEMENT_DB.length; k++) {
+      if (ELEMENT_DB[k].Z === inp.Z) { col = ELEMENT_DB[k].col; eName = ELEMENT_DB[k].name; break; }
+    }
+    atomNames.push(eName);
+    atomsHtml += '<div class="mol-atom-ball" style="background:' + col + ';box-shadow:0 0 12px ' + col + '66">' +
+      '<span class="mol-atom-sym">' + inp.sym + '</span>' +
+      '</div>';
+    if (j < recipe.inputs.length - 1) {
+      atomsHtml += '<span class="mol-plus">+</span>';
+    }
+  }
+
+  // Difficulty badge
+  var diffColors = { easy: '#44dd88', medium: '#ffaa33', hard: '#ff4466' };
+  var diffLabels = { easy: 'EASY', medium: 'MEDIUM', hard: 'HARD' };
+  var diff = recipe.difficulty || 'easy';
+
+  // Build hint text
+  var hint = 'Merge small atoms up to get ' + atomNames.join(' & ') + ', then bring them together!';
+
+  popup.innerHTML =
+    '<div class="mol-popup-card" onclick="event.stopPropagation()">' +
+      '<div class="mol-popup-header">' +
+        '<span class="mol-popup-name">' + (recipe.name || recipe.id) + '</span>' +
+        '<span class="mol-popup-diff" style="background:' + (diffColors[diff] || '#888') + '">' + (diffLabels[diff] || diff.toUpperCase()) + '</span>' +
+      '</div>' +
+      '<div class="mol-popup-atoms">' + atomsHtml + '</div>' +
+      '<div class="mol-popup-hint">' + hint + '</div>' +
+      '<div class="mol-popup-stats">' +
+        '<div class="mol-stat"><span class="mol-stat-icon">⚡</span><span class="mol-stat-val">' + (recipe.cost || 0) + '</span><span class="mol-stat-label">Energy</span></div>' +
+        '<div class="mol-stat"><span class="mol-stat-icon">⭐</span><span class="mol-stat-val">' + (recipe.points || 0) + '</span><span class="mol-stat-label">Points</span></div>' +
+      '</div>' +
+    '</div>';
+
+  popup.style.display = 'flex';
+}
+
+function closeMoleculeInfo() {
+  var popup = document.getElementById('mol-info-popup');
+  if (popup) popup.style.display = 'none';
 }
 
 function populateWorldSelector() {

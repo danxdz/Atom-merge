@@ -178,6 +178,98 @@
     .hud-lb:hover{opacity:1}
     #rbtn:hover{background:#4466ff}
 
+    /* ── Target molecule (clickable in HUD) ── */
+    .target-mol{
+      cursor:pointer;pointer-events:auto;
+      padding:2px 8px;border-radius:10px;
+      background:rgba(255,204,0,0.1);
+      border:1px solid rgba(255,204,0,0.2);
+      transition:all 0.3s;
+      animation:target-pulse 2.5s ease-in-out infinite;
+    }
+    .target-mol:hover{
+      background:rgba(255,204,0,0.2);
+      border-color:rgba(255,204,0,0.4);
+      text-shadow:0 0 8px rgba(255,204,0,0.5);
+    }
+    @keyframes target-pulse{
+      0%,100%{border-color:rgba(255,204,0,0.2)}
+      50%{border-color:rgba(255,204,0,0.45)}
+    }
+
+    /* ── Molecule Info Popup ── */
+    #mol-info-popup{
+      position:fixed;inset:0;display:none;
+      align-items:flex-start;justify-content:center;
+      padding-top:60px;
+      background:rgba(0,0,15,0.6);
+      z-index:45;
+      animation:mol-fade-in 0.2s ease;
+    }
+    @keyframes mol-fade-in{from{opacity:0}to{opacity:1}}
+
+    .mol-popup-card{
+      background:rgba(15,15,35,0.95);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:16px;
+      padding:24px 28px;
+      min-width:260px;max-width:340px;
+      backdrop-filter:blur(20px);
+      box-shadow:0 8px 40px rgba(0,0,0,0.5), 0 0 60px rgba(100,100,255,0.08);
+      animation:mol-slide-in 0.25s ease;
+      text-align:center;
+    }
+    @keyframes mol-slide-in{from{transform:translateY(-15px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+    .mol-popup-header{
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      margin-bottom:18px;
+    }
+    .mol-popup-name{
+      font-size:22px;font-weight:800;
+      background:linear-gradient(135deg,#ffcc00,#ff8800);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      letter-spacing:0.5px;
+    }
+    .mol-popup-diff{
+      font-size:9px;font-weight:800;letter-spacing:1.5px;
+      padding:3px 8px;border-radius:20px;color:#111;
+    }
+
+    .mol-popup-atoms{
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      margin:16px 0;flex-wrap:wrap;
+    }
+    .mol-atom-ball{
+      width:48px;height:48px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      position:relative;
+    }
+    .mol-atom-sym{
+      font-size:18px;font-weight:900;color:#fff;
+      text-shadow:0 1px 3px rgba(0,0,0,0.7);
+    }
+    .mol-plus{
+      font-size:20px;font-weight:300;opacity:0.4;
+    }
+
+    .mol-popup-hint{
+      font-size:12px;opacity:0.5;line-height:1.5;
+      margin:12px 0 18px;padding:0 8px;
+    }
+
+    .mol-popup-stats{
+      display:flex;justify-content:center;gap:24px;
+      padding-top:14px;
+      border-top:1px solid rgba(255,255,255,0.06);
+    }
+    .mol-stat{
+      display:flex;flex-direction:column;align-items:center;gap:2px;
+    }
+    .mol-stat-icon{font-size:18px}
+    .mol-stat-val{font-size:18px;font-weight:800;color:#fff}
+    .mol-stat-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;opacity:0.35}
+
     /* ── Debug ── */
     #atom-count{position:fixed;bottom:10px;right:166px;font-size:9px;opacity:0.25;z-index:10;pointer-events:none}
   </style>
@@ -196,7 +288,7 @@
     <div class="hud-best">BEST <span class="bv" id="best-val">0</span></div>
     <span class="hud-lb" onclick="openScoreboard()" title="High Scores">📋</span>
     <span id="server-status" title="Score server" style="font-size:10px;opacity:0.6;cursor:help">⏳</span>
-    <div class="hud-world" id="hud-world" style="font-size:11px;opacity:0.55;white-space:nowrap;cursor:pointer" onclick="toggleCfg()" title="Click to change world">🌍 W1</div>
+    <div class="hud-world" id="hud-world" style="font-size:11px;opacity:0.55;white-space:nowrap" title="Current world &amp; target">🌍 W1</div>
     <button id="sfx-toggle" onclick="toggleSfx()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#b0b0cc;font-size:13px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">🔊</button>
     <button id="cfg-toggle" onclick="toggleCfg()">⚙</button>
     <div id="hud-energy">
@@ -259,6 +351,9 @@
         letter-spacing:0.5px" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">Continue →</button>
     </div>
   </div>
+
+  <!-- Molecule Info Popup -->
+  <div id="mol-info-popup" style="display:none" onclick="closeMoleculeInfo()"></div>
 
   <!-- Game Over -->
   <div id="game-over">
