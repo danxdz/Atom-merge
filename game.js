@@ -1714,6 +1714,16 @@ function closeMoleculeInfo() {
   if (popup) popup.style.display = 'none';
 }
 
+// Delegated click listener for target-mol (backup for inline onclick)
+document.addEventListener('click', function(e) {
+  var t = e.target.closest('.target-mol');
+  if (t) { showMoleculeInfo(e); return; }
+}, true);
+document.addEventListener('touchend', function(e) {
+  var t = e.target.closest('.target-mol');
+  if (t) { e.preventDefault(); showMoleculeInfo(e); return; }
+}, true);
+
 function populateWorldSelector() {
   var sel = document.getElementById('cfg-world');
   if (!sel || !WORLDS_DATA.length) return;
