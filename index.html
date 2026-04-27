@@ -182,11 +182,14 @@
     /* ── Target molecule (clickable in HUD) ── */
     .target-mol{
       cursor:pointer;pointer-events:auto;
-      padding:2px 8px;border-radius:10px;
+      padding:4px 10px;border-radius:10px;
       background:rgba(255,204,0,0.1);
       border:1px solid rgba(255,204,0,0.2);
       transition:all 0.3s;
       animation:target-pulse 2.5s ease-in-out infinite;
+      -webkit-tap-highlight-color:rgba(255,204,0,0.3);
+      touch-action:manipulation;
+      min-height:28px;display:inline-flex;align-items:center;
     }
     .target-mol:hover{
       background:rgba(255,204,0,0.2);
@@ -329,6 +332,9 @@
 
     <div class="ct" style="margin-top:14px">⚛ Elements</div>
     <div id="legend"></div>
+    <div style="margin-top:16px;text-align:center">
+      <button onclick="restartGame();toggleCfg();" style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:none;border-radius:8px;padding:8px 24px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(231,76,60,0.4)">🔄 Restart Game</button>
+    </div>
   </div>
 
   <!-- Level-up Toast -->
@@ -402,8 +408,8 @@
   <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/babylonjs@5/babylon.js"></script>
   <!-- Game -->
-  <script src="./config.js"></script>
-  <script src="./molecules.js"></script>
-  <script src="./game.js"></script>
+  <script src="./config.js?v=4"></script>
+  <script src="./molecules.js?v=4"></script>
+  <script src="./game.js?v=4"></script>
 </body>
 </html>
