@@ -450,8 +450,8 @@ function addPhysicsToAtom(sp, elem) {
   try {
     sp.physicsImpostor.physicsBody.angularFactor.set(0, 0, 1);
     sp.physicsImpostor.physicsBody.linearFactor.set(1, 1, 0);
-    sp.physicsImpostor.physicsBody.angularDamping = 0.6;
-    sp.physicsImpostor.physicsBody.linearDamping = 0.08;
+    sp.physicsImpostor.physicsBody.angularDamping = 0.85;
+    sp.physicsImpostor.physicsBody.linearDamping = 0.12;
     sp.physicsImpostor.physicsBody.allowSleep = false;
     sp.physicsImpostor.physicsBody.position.z = 0;
   } catch(e) {}
