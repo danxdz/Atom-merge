@@ -33,54 +33,56 @@
     /* ── Header bar ── */
     #hud{
       position:fixed;top:0;left:50%;transform:translateX(-50%);
-      display:flex;align-items:center;
-      padding:10px 18px;gap:14px;
+      display:flex;align-items:center;flex-wrap:wrap;
+      padding:6px 12px;gap:8px;
       background:rgba(10,10,25,0.92);
       border-bottom:1px solid rgba(255,255,255,0.06);
       border-radius:0 0 10px 10px;
       pointer-events:none;z-index:10;
-      height:48px;
-      min-width:200px;
-      max-width:calc(100% - 12px);
+      width:calc(100% - 12px);max-width:600px;
       box-sizing:border-box;
     }
+    /* Row grouping */
+    .hud-row{display:flex;align-items:center;gap:8px;width:100%}
+    .hud-row-top{justify-content:space-between}
+    .hud-row-bot{justify-content:space-between}
+    .hud-left{display:flex;align-items:center;gap:6px}
+    .hud-right{display:flex;align-items:center;gap:4px}
+    .hud-center{display:flex;align-items:center;gap:4px;flex:1;justify-content:center;overflow:hidden;min-width:0}
+    #hud>*{pointer-events:auto}
+    .hud-score{display:flex;align-items:center;gap:5px;white-space:nowrap}
+    .hud-score .icon{font-size:15px;opacity:0.8}
+    .hud-score .val{font-size:17px;font-weight:700}
+    .hud-best{font-size:10px;opacity:0.45;white-space:nowrap}
+    .hud-best .bv{font-weight:700;opacity:0.7}
+    .hud-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#b0b0cc;font-size:13px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0}
+    .hud-btn:hover{background:rgba(255,255,255,0.12)}
+
+    #hud-energy{display:flex;align-items:center;gap:5px;flex:1;min-width:0}
+    #etrk{flex:1 1 0;max-width:180px;min-width:24px;height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden}
+    #energy-fill{height:100%;width:100%;background:linear-gradient(90deg,#f5a623,#f7c948);border-radius:4px;transition:width .3s}
+    #hud-energy .e-icon{font-size:14px}
+    #hud-energy .e-val{font-size:13px;font-weight:700;color:#f7c948;min-width:22px}
+
     @media(max-width:480px){
-      #hud{padding:4px 8px;gap:5px;height:36px}
+      #hud{padding:4px 8px;gap:4px}
+      .hud-row{gap:5px}
       .hud-score .val{font-size:14px}
-      .hud-score .icon{font-size:14px}
-      .hud-best{font-size:9px}
-      #hud-energy{gap:4px}
-      #hud-energy .e-val{font-size:11px;min-width:22px}
-      #hud-energy .e-icon{font-size:14px}
-      #etrk{min-width:20px;height:7px;max-width:120px}
+      .hud-score .icon{font-size:13px}
+      .hud-best{display:none}
+      .hud-btn{width:24px;height:24px;font-size:12px}
+      #hud-energy .e-val{font-size:11px;min-width:18px}
+      #hud-energy .e-icon{font-size:12px}
+      #etrk{height:6px;max-width:100px}
     }
     @media(max-width:360px){
-      #hud{padding:3px 6px;gap:4px;height:32px}
+      #hud{padding:3px 6px;gap:3px}
       .hud-score .val{font-size:12px}
-      .hud-best{display:none}
-      #etrk{max-width:80px}
+      #etrk{max-width:60px}
+      #server-status{display:none}
     }
-    #hud>*{pointer-events:auto}
-    .hud-score{display:flex;align-items:center;gap:7px;white-space:nowrap}
-    .hud-score .icon{font-size:17px;opacity:0.8}
-    .hud-score .val{font-size:20px;font-weight:700}
-    .hud-best{font-size:12px;opacity:0.45;white-space:nowrap}
-    .hud-best .bv{font-weight:700;opacity:0.7}
 
-    #hud-energy{display:flex;align-items:center;gap:6px;margin-left:auto;flex:1 1 auto;justify-content:flex-end;overflow:hidden;min-width:0}
-    #etrk{flex:1 1 0;max-width:200px;min-width:30px;height:10px;background:rgba(255,255,255,0.08);border-radius:5px;overflow:hidden}
-    #energy-fill{height:100%;width:100%;background:linear-gradient(90deg,#f5a623,#f7c948);border-radius:5px;transition:width .3s}
-    #hud-energy .e-icon{font-size:17px}
-    #hud-energy .e-val{font-size:15px;font-weight:700;color:#f7c948;min-width:28px}
-
-    /* ── Config toggle (in header) ── */
-    #cfg-toggle{
-      background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-      border-radius:6px;color:#b0b0cc;font-size:13px;
-      width:28px;height:28px;display:flex;align-items:center;justify-content:center;
-      cursor:pointer;margin-left:6px;pointer-events:auto;flex-shrink:0;padding:0;
-    }
-    #cfg-toggle:hover{background:rgba(255,255,255,0.12)}
+    /* cfg-toggle now uses .hud-btn class */
 
     /* ── Config panel ── */
     #cfg{
@@ -174,8 +176,6 @@
       color:#111;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;
     }
     .ne-ok:hover{background:#ffe044}
-    .hud-lb{cursor:pointer;opacity:0.7;font-size:14px;display:flex;align-items:center;line-height:1}
-    .hud-lb:hover{opacity:1}
     .hud-world{display:flex;align-items:center;line-height:1}
     #rbtn:hover{background:#4466ff}
 
@@ -288,18 +288,30 @@
 
   <!-- HUD -->
   <div id="hud">
-    <div class="hud-score"><span class="icon">🏆</span><span class="val" id="score-val">0</span></div>
-    <div class="hud-best">BEST <span class="bv" id="best-val">0</span></div>
-    <span class="hud-lb" onclick="openScoreboard()" title="High Scores">📋</span>
-    <span id="server-status" title="Score server" style="font-size:8px;opacity:0.6;cursor:help;display:flex;align-items:center;line-height:1">⏳</span>
-    <div class="hud-world" id="hud-world" style="font-size:11px;opacity:0.55;white-space:nowrap;display:flex;align-items:center;line-height:1" title="Current world &amp; target">🌍 W1</div>
-    <button id="sfx-toggle" onclick="toggleSfx()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#b0b0cc;font-size:13px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0">🔊</button>
-    <button id="cfg-toggle" onclick="toggleCfg()">⚙</button>
-    <div id="hud-energy">
-      <div id="etrk"><div id="energy-fill"></div></div>
-      <span class="e-icon">⚡</span><span class="e-val" id="energy-val">45</span>
-      <span id="combo-display" style="font-size:11px;font-weight:700;color:#ff9900;opacity:0;transition:opacity .3s;margin-left:4px"></span>
-      <span id="drop-cost" style="font-size:10px;opacity:0.45;margin-left:4px;white-space:nowrap">-1⚡</span>
+    <!-- Row 1: Score | World/Target | Buttons -->
+    <div class="hud-row hud-row-top">
+      <div class="hud-left">
+        <div class="hud-score"><span class="icon">🏆</span><span class="val" id="score-val">0</span></div>
+        <div class="hud-best">BEST <span class="bv" id="best-val">0</span></div>
+      </div>
+      <div class="hud-center">
+        <div class="hud-world" id="hud-world" style="font-size:11px;opacity:0.55;white-space:nowrap;display:flex;align-items:center;line-height:1;overflow:hidden;text-overflow:ellipsis" title="Current world &amp; target">🌍 W1</div>
+      </div>
+      <div class="hud-right">
+        <span id="server-status" title="Score server" style="font-size:8px;opacity:0.6;cursor:help;display:flex;align-items:center;line-height:1">⏳</span>
+        <span class="hud-btn" onclick="openScoreboard()" title="High Scores">📋</span>
+        <button id="sfx-toggle" class="hud-btn" onclick="toggleSfx()">🔊</button>
+        <button id="cfg-toggle" class="hud-btn" onclick="toggleCfg()">⚙</button>
+      </div>
+    </div>
+    <!-- Row 2: Energy bar -->
+    <div class="hud-row hud-row-bot">
+      <div id="hud-energy">
+        <div id="etrk"><div id="energy-fill"></div></div>
+        <span class="e-icon">⚡</span><span class="e-val" id="energy-val">45</span>
+        <span id="combo-display" style="font-size:11px;font-weight:700;color:#ff9900;opacity:0;transition:opacity .3s;margin-left:4px"></span>
+        <span id="drop-cost" style="font-size:10px;opacity:0.45;margin-left:4px;white-space:nowrap">-1⚡</span>
+      </div>
     </div>
   </div>
 
@@ -408,8 +420,8 @@
   <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/babylonjs@5/babylon.js"></script>
   <!-- Game -->
-  <script src="./config.js?v=4"></script>
-  <script src="./molecules.js?v=4"></script>
-  <script src="./game.js?v=4"></script>
+  <script src="./config.js?v=5"></script>
+  <script src="./molecules.js?v=5"></script>
+  <script src="./game.js?v=5"></script>
 </body>
 </html>
