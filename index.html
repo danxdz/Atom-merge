@@ -48,7 +48,7 @@
     .hud-row-bot{justify-content:space-between}
     .hud-left{display:flex;align-items:center;gap:6px}
     .hud-right{display:flex;align-items:center;gap:4px}
-    .hud-center{display:flex;align-items:center;gap:4px;flex:1;justify-content:center;overflow:hidden;min-width:0}
+    .hud-center{display:flex;align-items:center;gap:4px;flex:1;justify-content:center;min-width:0}
     #hud>*{pointer-events:auto}
     .hud-score{display:flex;align-items:center;gap:5px;white-space:nowrap}
     .hud-score .icon{font-size:15px;opacity:0.8}
@@ -207,7 +207,7 @@
       align-items:flex-start;justify-content:center;
       padding-top:60px;
       background:rgba(0,0,15,0.6);
-      z-index:45;
+      z-index:200;
       animation:mol-fade-in 0.2s ease;
     }
     @keyframes mol-fade-in{from{opacity:0}to{opacity:1}}
@@ -295,7 +295,7 @@
         <div class="hud-best">BEST <span class="bv" id="best-val">0</span></div>
       </div>
       <div class="hud-center">
-        <div class="hud-world" id="hud-world" style="font-size:11px;opacity:0.55;white-space:nowrap;display:flex;align-items:center;line-height:1;overflow:hidden;text-overflow:ellipsis" title="Current world &amp; target">🌍 W1</div>
+        <div class="hud-world" id="hud-world" style="font-size:11px;opacity:0.55;display:flex;align-items:center;line-height:1;flex-wrap:wrap;gap:2px" title="Current world &amp; target">🌍 W1</div>
       </div>
       <div class="hud-right">
         <span id="server-status" title="Score server" style="font-size:8px;opacity:0.6;cursor:help;display:flex;align-items:center;line-height:1">⏳</span>
@@ -420,8 +420,8 @@
   <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/babylonjs@5/babylon.js"></script>
   <!-- Game -->
-  <script src="./config.js?v=5"></script>
-  <script src="./molecules.js?v=5"></script>
-  <script src="./game.js?v=5"></script>
+  <script src="./config.js?v=6"></script>
+  <script src="./molecules.js?v=6"></script>
+  <script src="./game.js?v=6"></script>
 </body>
 </html>
