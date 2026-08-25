@@ -130,6 +130,8 @@ async function boot() {
 
   await loadGameData();
   buildScene();
+  applyWorldTheme();
+  initStarfield();
   setupInput(canvas);
   populateWorldSelector();
   buildLegend();
@@ -1771,6 +1773,160 @@ function updatePhysicsFromUI() {
   try {
     scene.getPhysicsEngine().setGravity(vec3(0, -PHYSICS_PRESET.gravity, 0));
   } catch(e){}
+}
+
+/* ── World theme (dynamic background) ─────────────────────────
+   Sets body background gradient + ambient blob colors based on
+   the current world's theme (bgColor / accentColor). ── */
+function applyWorld(idx) {
+  worldIdx = idx;
+  applyWorldTheme();
+}
+
+function hexToHsl(hex) {
+  var r = parseInt(hex.slice(1,3),16)/255;
+  var g = parseInt(hex.slice(3,5),16)/255;
+  var b = parseInt(hex.slice(5,7),16)/255;
+  var max = Math.max(r,g,b), min = Math.min(r,g,b);
+  var h, s, l = (max+min)/2;
+  if (max === min) { h = s = 0; }
+  else {
+    var d = max - min;
+    s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+    switch(max) {
+      case r: h = (g-b)/d + (g<b?6:0); break;
+      case g: h = (b-r)/d + 2; break;
+      default: h = (r-g)/d + 4; break;
+    }
+    h /= 6;
+  }
+  return [h*360, s*100, l*100];
+}
+
+function hslToHex(h, s, l) {
+  h = ((h % 360) + 360) % 360;
+  s /= 100; l /= 100;
+  var c = (1 - Math.abs(2*l - 1)) * s;
+  var x = c * (1 - Math.abs((h/60) % 2 - 1));
+  var m = l - c/2;
+  var r,g,b;
+  if (h < 60)       { r=c; g=x; b=0; }
+  else if (h < 120) { r=x; g=c; b=0; }
+  else if (h < 180) { r=0; g=c; b=x; }
+  else if (h < 240) { r=0; g=x; b=c; }
+  else if (h < 300) { r=x; g=0; b=c; }
+  else              { r=c; g=0; b=x; }
+  var toHex = function(v) {
+    var n = Math.round((v+m)*255);
+    n = Math.max(0, Math.min(255, n));
+    var s2 = n.toString(16);
+    return s2.length === 1 ? '0'+s2 : s2;
+  };
+  return '#' + toHex(r) + toHex(g) + toHex(b);
+}
+
+function rotateHue(hex, degrees) {
+  var hsl = hexToHsl(hex);
+  return hslToHex(hsl[0] + degrees, hsl[1], hsl[2]);
+}
+
+function mixWithWhite(hex, amount) {
+  var hsl = hexToHsl(hex);
+  var l = hsl[2] + (100 - hsl[2]) * amount;
+  return hslToHex(hsl[0], hsl[1], l);
+}
+
+function darkenHex(hex, amount) {
+  var hsl = hexToHsl(hex);
+  var l = Math.max(0, hsl[2] * (1 - amount));
+  return hslToHex(hsl[0], hsl[1], l);
+}
+
+function applyWorldTheme() {
+  var w = WORLDS_DATA[worldIdx];
+  if (!w || !w.theme) return;
+  var theme = w.theme;
+  var bg = theme.bgColor || '#111122';
+  var accent = theme.accentColor || '#4488ff';
+
+  var lighter = mixWithWhite(bg, 0.35);
+  var darker = darkenHex(bg, 0.5);
+
+  document.body.style.transition = 'background 1s ease';
+  document.body.style.background =
+    'radial-gradient(circle at 50% 40%, ' + lighter + ' 0%, ' + bg + ' 45%, ' + darker + ' 100%)';
+
+  var blobColors = [
+    accent,
+    rotateHue(accent, 60),
+    rotateHue(accent, 180),
+    rotateHue(accent, -60),
+    mixWithWhite(accent, 0.5)
+  ];
+
+  var blobs = document.querySelectorAll('.bg-blob');
+  for (var i = 0; i < blobs.length && i < blobColors.length; i++) {
+    blobs[i].style.background = blobColors[i];
+    blobs[i].style.opacity = '0.12';
+  }
+}
+
+/* ── Starfield background ──────────────────────────────────── */
+var starfieldStars = [];
+function initStarfield() {
+  var canvas = document.getElementById('starfield');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    draw();
+  }
+
+  function makeStars() {
+    starfieldStars = [];
+    for (var i = 0; i < 120; i++) {
+      starfieldStars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: 0.5 + Math.random() * 1.5,
+        o: 0.2 + Math.random() * 0.6
+      });
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = 0; i < starfieldStars.length; i++) {
+      var s = starfieldStars[i];
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + s.o.toFixed(2) + ')';
+      ctx.fill();
+    }
+  }
+
+  function twinkle() {
+    for (var i = 0; i < starfieldStars.length; i++) {
+      starfieldStars[i].o = Math.max(0.15, Math.min(0.85,
+        starfieldStars[i].o + (Math.random() * 0.3 - 0.15)));
+    }
+    draw();
+  }
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  makeStars();
+  draw();
+
+  window.addEventListener('resize', function() {
+    resize();
+    makeStars();
+    draw();
+  });
+
+  setInterval(twinkle, 3000);
 }
 
 function setWorldFromUI(idx) {
