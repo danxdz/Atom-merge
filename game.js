@@ -96,6 +96,7 @@ function loadGame() {
     if (s.worldIdx !== undefined) {
       worldIdx = s.worldIdx;
       applyWorld(worldIdx);
+      applyWorldTheme();
     }
     if (s.currentLevel !== undefined) {
       var maxLvl = WORLDS_DATA[worldIdx].molecules ? WORLDS_DATA[worldIdx].molecules.length : 6;
@@ -697,6 +698,7 @@ function continueToNextWorld() {
 
   // Keep score and best, reset everything else
   applyWorld(nextIdx);
+  applyWorldTheme();
   texCache = {};
   matCache = {};
 
@@ -1778,10 +1780,8 @@ function updatePhysicsFromUI() {
 /* ── World theme (dynamic background) ─────────────────────────
    Sets body background gradient + ambient blob colors based on
    the current world's theme (bgColor / accentColor). ── */
-function applyWorld(idx) {
-  worldIdx = idx;
-  applyWorldTheme();
-}
+/* applyWorld lives in config.js — DO NOT redefine here.
+   Call applyWorldTheme() after applyWorld() where needed. */
 
 function hexToHsl(hex) {
   var r = parseInt(hex.slice(1,3),16)/255;
@@ -1931,6 +1931,7 @@ function initStarfield() {
 
 function setWorldFromUI(idx) {
   applyWorld(parseInt(idx));
+  applyWorldTheme();
   texCache = {};
   matCache = {};
   buildLegend();
