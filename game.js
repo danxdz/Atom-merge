@@ -127,7 +127,7 @@ function loadGame() {
 /* ── Engine bootstrap ───────────────────────────────────────── */
 async function boot() {
   var canvas = document.getElementById('renderCanvas');
-  engine = new BABYLON.Engine(canvas, true, { stencil: true, preserveDrawingBuffer: false });
+  engine = new BABYLON.Engine(canvas, true, { stencil: true, preserveDrawingBuffer: false, adaptToDeviceRatio: true });
 
   await loadGameData();
   buildScene();
@@ -258,6 +258,11 @@ function buildScene() {
   camera.setTarget(vec3(0, 7, 0));
   camera.inputs.clear();
   fitCamera();
+
+  // MSAA 4x + FXAA — crisp edges on high-DPI mobile
+  var defaultPipeline = new BABYLON.DefaultRenderingPipeline('default', true, scene, [camera]);
+  defaultPipeline.samples = 4;
+  defaultPipeline.fxaaEnabled = true;
 
   // Lighting
   var hemi = new BABYLON.HemisphericLight('h', vec3(0, 1, 0.3), scene);
@@ -1877,10 +1882,15 @@ function initStarfield() {
   var canvas = document.getElementById('starfield');
   if (!canvas) return;
   var ctx = canvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
 
   function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     draw();
   }
 
@@ -1915,8 +1925,11 @@ function initStarfield() {
     draw();
   }
 
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   makeStars();
   draw();
 
