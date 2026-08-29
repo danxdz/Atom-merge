@@ -127,7 +127,10 @@ function loadGame() {
 /* ── Engine bootstrap ───────────────────────────────────────── */
 async function boot() {
   var canvas = document.getElementById('renderCanvas');
-  engine = new BABYLON.Engine(canvas, true, { stencil: true, preserveDrawingBuffer: false, adaptToDeviceRatio: true });
+  engine = new BABYLON.Engine(canvas, true, { stencil: true, preserveDrawingBuffer: false });
+  // Render at native DPI (capped at 2x to save GPU on 3x screens)
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  engine.setHardwareScalingLevel(1 / dpr);
 
   await loadGameData();
   buildScene();
@@ -258,11 +261,6 @@ function buildScene() {
   camera.setTarget(vec3(0, 7, 0));
   camera.inputs.clear();
   fitCamera();
-
-  // MSAA 4x + FXAA — crisp edges on high-DPI mobile
-  var defaultPipeline = new BABYLON.DefaultRenderingPipeline('default', true, scene, [camera]);
-  defaultPipeline.samples = 4;
-  defaultPipeline.fxaaEnabled = true;
 
   // Lighting
   var hemi = new BABYLON.HemisphericLight('h', vec3(0, 1, 0.3), scene);
