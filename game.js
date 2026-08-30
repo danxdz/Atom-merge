@@ -128,9 +128,6 @@ function loadGame() {
 async function boot() {
   var canvas = document.getElementById('renderCanvas');
   engine = new BABYLON.Engine(canvas, true, { stencil: true, preserveDrawingBuffer: false });
-  // Render at native DPI (capped at 2x to save GPU on 3x screens)
-  var dpr = Math.min(window.devicePixelRatio || 1, 2);
-  engine.setHardwareScalingLevel(1 / dpr);
 
   await loadGameData();
   buildScene();
@@ -1896,8 +1893,8 @@ function initStarfield() {
     starfieldStars = [];
     for (var i = 0; i < 120; i++) {
       starfieldStars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
         r: 0.5 + Math.random() * 1.5,
         o: 0.2 + Math.random() * 0.6
       });
