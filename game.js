@@ -1574,46 +1574,44 @@ function createPickPlane() {
   pickPlane.isPickable = true;
 }
 
-function mapX(clientX, clientY) {
-  if (!pickPlane || !inputCanvas) return 0;
-  var r  = inputCanvas.getBoundingClientRect();
-  var sx = ((clientX - r.left) / r.width);
-  var sy = ((clientY - r.top)  / r.height);
+function mapXFromPointer() {
+  if (!pickPlane) return ghostX;
+  // scene.pointerX/Y are managed by Babylon — always DPR-correct
   var pick = scene.pick(
-    sx * engine.getRenderWidth(),
-    sy * engine.getRenderHeight(),
+    scene.pointerX,
+    scene.pointerY,
     function (mesh) { return mesh === pickPlane; }
   );
   if (pick && pick.hit && pick.pickedPoint) {
     var maxX = CONTAINER.w / 2 - 0.5;
     return Math.max(-maxX, Math.min(maxX, pick.pickedPoint.x));
   }
-  return ghostX; // fallback to last known position
+  return ghostX;
 }
 
 function setupInput(cvs) {
   inputCanvas = cvs;
   createPickPlane();
 
-  inputCanvas.addEventListener('mousemove', function (e) {
+  inputCanvas.addEventListener('pointermove', function (e) {
     if (gameIsOver) return;
-    ghostX = mapX(e.clientX, e.clientY);
+    ghostX = mapXFromPointer();
     if (ghostMesh) ghostMesh.position.x = ghostX;
   });
   inputCanvas.addEventListener('click', function (e) {
     if (gameIsOver) return;
-    dropAtom(mapX(e.clientX, e.clientY));
+    dropAtom(mapXFromPointer());
   });
   inputCanvas.addEventListener('touchmove', function (e) {
     e.preventDefault();
     if (gameIsOver) return;
-    ghostX = mapX(e.touches[0].clientX, e.touches[0].clientY);
+    ghostX = mapXFromPointer();
     if (ghostMesh) ghostMesh.position.x = ghostX;
   }, { passive: false });
   inputCanvas.addEventListener('touchend', function (e) {
     e.preventDefault();
     if (gameIsOver) return;
-    dropAtom(mapX(e.changedTouches[0].clientX, e.changedTouches[0].clientY));
+    dropAtom(mapXFromPointer());
   }, { passive: false });
 }
 
