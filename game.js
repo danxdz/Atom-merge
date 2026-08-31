@@ -128,9 +128,9 @@ function loadGame() {
 async function boot() {
   var canvas = document.getElementById('renderCanvas');
   engine = new BABYLON.Engine(canvas, true, { stencil: true, preserveDrawingBuffer: false }, true /* adaptToDeviceRatio */);
-  // Cap at 2x to avoid 3x rendering on expensive phones
+  // Cap at 2x on 3x+ screens: scalingLevel = 1/targetDPR
   var dpr = window.devicePixelRatio || 1;
-  if (dpr > 2) engine.setHardwareScalingLevel(dpr / 2);
+  if (dpr > 2) engine.setHardwareScalingLevel(1 / 2);
 
   await loadGameData();
   buildScene();
