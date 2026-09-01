@@ -55,7 +55,7 @@
     .hud-row-bot{justify-content:space-between}
     .hud-left{display:flex;align-items:center;gap:6px;flex-shrink:0}
     .hud-right{display:flex;align-items:center;gap:4px;flex-shrink:0}
-    .hud-center{display:flex;align-items:center;gap:4px;flex:1;justify-content:center;min-width:0;overflow:hidden}
+    .hud-center{display:flex;align-items:center;gap:4px;flex:1 1 0;justify-content:center;min-width:0;overflow:hidden}
     #hud>*{pointer-events:auto}
     .hud-score{display:flex;align-items:center;gap:5px;white-space:nowrap}
     .hud-score .icon{font-size:15px;opacity:0.8}
@@ -303,7 +303,7 @@
         <div class="hud-best">BEST <span class="bv" id="best-val">0</span></div>
       </div>
       <div class="hud-center">
-        <div class="hud-world" id="hud-world" style="font-size:11px;opacity:0.55;display:flex;align-items:center;line-height:1;flex-wrap:nowrap;gap:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%" title="Current world &amp; target">🌍 W1</div>
+        <div class="hud-world" id="hud-world" style="font-size:11px;opacity:0.55;display:block;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;min-width:0" title="Current world &amp; target">🌍 W1</div>
       </div>
       <div class="hud-right">
         <span id="server-status" title="Score server" style="font-size:8px;opacity:0.6;cursor:help;display:flex;align-items:center;line-height:1">⏳</span>
