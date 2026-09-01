@@ -215,10 +215,10 @@ function fitCamera() {
   camera.position.z = camZ;
   camera.setTarget(new BABYLON.Vector3(0, camY - 1, 0));
 
-  /* Align HUD width to projected container width */
+  /* Align HUD width to projected container width (CSS pixels, not device pixels) */
   var visW = 2 * camZ * Math.tan(camera.fov / 2) * aspect;
   var boxFrac = CONTAINER.w / visW;
-  var pixW = Math.round(boxFrac * engine.getRenderWidth());
+  var pixW = Math.round(boxFrac * engine.getRenderingCanvas().clientWidth);
   var hud = document.getElementById('hud');
   if (hud) {
     hud.style.width = pixW + 'px';
