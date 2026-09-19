@@ -338,6 +338,20 @@ function moleculeVFX(recipe, center, matchedAtoms) {
   var eff = recipe.effect || 'chain_spark';
   var rad = recipe.effectRadius || 2.5;
   var color = ELEMENT_DB[matchedAtoms[0].tier].col;
+  var worldTheme = WORLDS_DATA[worldIdx] && WORLDS_DATA[worldIdx].theme;
+  var heroColor = (worldTheme && worldTheme.accentColor) || color;
+
+  // Every completed molecule gets one readable "hero" halo in the world color.
+  if (typeof emitMoleculeHalo === 'function') {
+    emitMoleculeHalo(center, heroColor, Math.max(1.2, rad));
+  }
+
+  // Rare secondary accent: enough variation to feel alive, not constant screen noise.
+  if (typeof emitMergeRing === 'function' && typeof getVfxTier === 'function' &&
+      getVfxTier() > 0 && Math.random() < 0.22) {
+    var accent2 = typeof rotateHue === 'function' ? rotateHue(heroColor, 55) : heroColor;
+    setTimeout(function() { emitMergeRing(center, accent2, Math.max(0.8, rad * 0.65)); }, 90);
+  }
 
   // No full-screen flash — only local particle VFX
 
