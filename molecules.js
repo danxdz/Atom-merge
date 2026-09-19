@@ -235,11 +235,32 @@ function triggerMolecule(recipe, matchedAtoms) {
             return 0;
           });
           var bpTier = ingTiers.length > 0 ? ingTiers[bpIdx % ingTiers.length] : 0;
-          var ox = (Math.random() - 0.5) * 0.8;
-          var oy = Math.random() * 0.3;
-          var atom = spawnAtom(bpTier, center.x, center.y, 0, true);
-          // Pop-out animation: start tiny at center, grow to full size
+
+          // Spread byproducts around the reaction center instead of stacking every
+          // physics body at exactly the same coordinate.
+          var elem = ELEMENT_DB[bpTier];
+          var angle = (Math.PI * 2 * bpIdx / numByproducts) + (Math.random() - 0.5) * 0.35;
+          var spread = 0.45 + Math.min(0.65, (elem ? elem.r : 0.3) * 0.35);
+          var ox = Math.cos(angle) * spread;
+          var oy = 0.25 + Math.sin(angle) * spread * 0.45;
+          var radius = elem ? elem.r : 0.3;
+          var minX = -CONTAINER.w / 2 + radius + 0.12;
+          var maxX =  CONTAINER.w / 2 - radius - 0.12;
+          var minY = radius + 0.12;
+          var maxY = CONTAINER.h - radius - 0.12;
+          var spawnX = Math.max(minX, Math.min(maxX, center.x + ox));
+          var spawnY = Math.max(minY, Math.min(maxY, center.y + oy));
+
+          var atom = spawnAtom(bpTier, spawnX, spawnY, 0, true);
+          // Pop-out animation: start tiny at its separated spawn point, grow to full size
           if (atom && atom.mesh) {
+            try {
+              var body = atom.mesh.physicsImpostor && atom.mesh.physicsImpostor.physicsBody;
+              if (body) {
+                body.velocity.x += ox * 1.4;
+                body.velocity.y += 0.7 + Math.abs(oy) * 0.8;
+              }
+            } catch(e) {}
             var fullScale = atom.mesh.scaling.clone();
             atom.mesh.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
             var popAnim = new BABYLON.Animation('molPop', 'scaling', 60,

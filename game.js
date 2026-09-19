@@ -94,13 +94,18 @@ function loadGame() {
     var s = JSON.parse(raw);
 
     if (s.worldIdx !== undefined) {
-      worldIdx = s.worldIdx;
+      var savedWorld = parseInt(s.worldIdx, 10);
+      if (!isFinite(savedWorld) || savedWorld < 0 || savedWorld >= WORLDS_DATA.length) savedWorld = 0;
+      worldIdx = savedWorld;
       applyWorld(worldIdx);
       applyWorldTheme();
     }
+
+    var maxLvl = WORLDS_DATA[worldIdx].molecules ? WORLDS_DATA[worldIdx].molecules.length : 6;
     if (s.currentLevel !== undefined) {
-      var maxLvl = WORLDS_DATA[worldIdx].molecules ? WORLDS_DATA[worldIdx].molecules.length : 6;
-      currentLevel = Math.min(s.currentLevel, maxLvl - 1);
+      var savedLevel = parseInt(s.currentLevel, 10);
+      if (!isFinite(savedLevel)) savedLevel = 0;
+      currentLevel = Math.max(0, Math.min(savedLevel, maxLvl));
     }
 
     score = s.score || 0;
@@ -120,6 +125,13 @@ function loadGame() {
     updateGhost();
     updateQueuePreview();
     updateHUD();
+
+    // A completed world is a valid saved state. Re-open the completion screen
+    // instead of silently clamping back to the final recipe.
+    if (currentLevel >= maxLvl) {
+      canDrop = false;
+      setTimeout(function() { showWorldComplete(); }, 0);
+    }
     return true;
   } catch(e) { return false; }
 }
@@ -143,6 +155,8 @@ async function boot() {
   checkServerStatus(); // ping scores server
 
   var lastTick = 0;
+  var lastStormTick = performance.now();
+  var lastHudTick = 0;
 
   engine.runRenderLoop(function () {
     if (!scene || !scene.activeCamera) return;
@@ -153,9 +167,16 @@ async function boot() {
       checkGameOver();
       lastTick = now;
     }
-    updateStormLines();
+    // Storm proximity scanning is O(n²); 30 Hz is visually smooth and much cheaper.
+    if (now - lastStormTick >= 33) {
+      updateStormLines((now - lastStormTick) / 1000);
+      lastStormTick = now;
+    }
     /* energy only changes on merge — no passive drain */
-    updateHUD();
+    if (now - lastHudTick >= 250) {
+      updateHUD();
+      lastHudTick = now;
+    }
     // Enforce Z=0 + micro-velocity damping + recover missing physics
     var floorY = -(CONTAINER.h / 2);
     for (var zi = 0; zi < atoms.length; zi++) {
@@ -463,11 +484,21 @@ function addPhysicsToAtom(sp, elem) {
   } catch(e) {}
 }
 
+function disposeMeshWithMaterial(mesh) {
+  if (!mesh) return;
+  try { if (mesh.physicsImpostor) mesh.physicsImpostor.dispose(); } catch(e){}
+  try {
+    var mat = mesh.material;
+    mesh.material = null;
+    if (mat) mat.dispose(false, false); // keep shared textures alive
+  } catch(e){}
+  try { mesh.dispose(); } catch(e){}
+}
+
 function removeAtom(atom) {
   var i = atoms.indexOf(atom);
   if (i >= 0) atoms.splice(i, 1);
-  try { atom.mesh.physicsImpostor.dispose(); } catch(e){}
-  try { atom.mesh.dispose(); } catch(e){}
+  disposeMeshWithMaterial(atom.mesh);
 }
 
 /* ── 3D Queue Preview ──────────────────────────────────────── */
@@ -504,7 +535,7 @@ function makeQueueBall(qi) {
 
 function updateQueuePreview() {
   for (var i = 0; i < 3; i++) {
-    if (queueMeshes[i]) { queueMeshes[i].dispose(); queueMeshes[i] = null; }
+    if (queueMeshes[i]) { disposeMeshWithMaterial(queueMeshes[i]); queueMeshes[i] = null; }
   }
   for (var qi = 0; qi < 3; qi++) {
     queueMeshes[qi] = makeQueueBall(qi);
@@ -556,8 +587,8 @@ function animateQueueDrop(targetX, callback) {
     if (t >= 1) {
       scene.onBeforeRenderObservable.remove(obs);
       // Clean up old meshes
-      if (sweeper) sweeper.dispose();
-      for (var k = 0; k < sliders.length; k++) sliders[k].mesh.dispose();
+      if (sweeper) disposeMeshWithMaterial(sweeper);
+      for (var k = 0; k < sliders.length; k++) disposeMeshWithMaterial(sliders[k].mesh);
       // Rebuild fresh queue
       updateQueuePreview();
       if (callback) callback();
@@ -582,12 +613,12 @@ function dropAtom(wx) {
   sessionStats.dropsCount++;
 
   // Hide ghost — the sweep animation replaces it
-  if (ghostMesh) { ghostMesh.dispose(); ghostMesh = null; }
+  if (ghostMesh) { disposeMeshWithMaterial(ghostMesh); ghostMesh = null; }
 
   // Advance queue and start sweep simultaneously with ball drop
   advanceQueue();
   saveGame();
-  animateQueueDrop(ghostX, function() {
+  animateQueueDrop(wx, function() {
     // Sweep done → show new ghost + allow next drop
     updateGhost();
     updateHUD();
@@ -598,7 +629,7 @@ function dropAtom(wx) {
 
 /* ── Ghost (drop preview) ──────────────────────────────────── */
 function updateGhost() {
-  if (ghostMesh) ghostMesh.dispose();
+  if (ghostMesh) disposeMeshWithMaterial(ghostMesh);
   var elem = ELEMENT_DB[dropQueue[0]];
   ghostMesh = BABYLON.MeshBuilder.CreateSphere('ghost',
     { diameter: elem.r * 2, segments: 16 }, scene);
@@ -709,7 +740,7 @@ function continueToNextWorld() {
   disposeAllStormLines();
   for (var i = atoms.length - 1; i >= 0; i--) removeAtom(atoms[i]);
   atoms = [];
-  if (ghostMesh) { ghostMesh.dispose(); ghostMesh = null; }
+  if (ghostMesh) { disposeMeshWithMaterial(ghostMesh); ghostMesh = null; }
 
   currentLevel = 0;
   energy      = 0;
@@ -1215,8 +1246,8 @@ function getStormDotMat(color) {
   return m;
 }
 
-function updateStormLines() {
-  stormTime += 0.016; // ~60fps tick
+function updateStormLines(dtSec) {
+  stormTime += (dtSec || 0.016);
 
   // Build active pairs of same-tier atoms in proximity
   var activePairs = {};
@@ -1378,13 +1409,28 @@ function checkServerStatus() {
   });
 }
 
+function _normalizeScoreRow(r) {
+  r = r || {};
+  var pts = Number(r.score);
+  if (!isFinite(pts) || pts < 0) pts = 0;
+  return {
+    name: String(r.name || '???').slice(0, 16),
+    score: Math.floor(pts),
+    world: String(r.world || '').slice(0, 64),
+    date: r.created_at || r.date || null
+  };
+}
+
 // Fetch top 10 scores from Supabase
 function loadHighScores(cb) {
   if (!SUPA_URL) { _loadLocal(cb); return; }
   fetch(SUPA_URL + '/rest/v1/scores?select=name,score,world,created_at&order=score.desc&limit=' + MAX_SCORES, {
     headers: _supaHeaders()
-  }).then(function(r) { return r.json(); }).then(function(rows) {
-    _cachedScores = (rows || []).map(function(r) { return { name: r.name, score: r.score, world: r.world || '', date: r.created_at }; });
+  }).then(function(r) {
+    if (!r.ok) throw new Error('score fetch failed: ' + r.status);
+    return r.json();
+  }).then(function(rows) {
+    _cachedScores = Array.isArray(rows) ? rows.map(_normalizeScoreRow) : [];
     try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
     if (cb) cb(_cachedScores);
   }).catch(function() {
@@ -1392,7 +1438,13 @@ function loadHighScores(cb) {
   });
 }
 function _loadLocal(cb) {
-  try { var raw = localStorage.getItem('atomMerge_highScores'); if (raw) _cachedScores = JSON.parse(raw); } catch(e) {}
+  try {
+    var raw = localStorage.getItem('atomMerge_highScores');
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      _cachedScores = Array.isArray(parsed) ? parsed.map(_normalizeScoreRow) : [];
+    }
+  } catch(e) {}
   if (cb) cb(_cachedScores);
 }
 function isHighScore(pts) {
@@ -1402,7 +1454,7 @@ function isHighScore(pts) {
 
 function insertHighScore(name, pts, cb) {
   var w = WORLDS_DATA[worldIdx];
-  var worldName = w ? w.name : '???';
+  var worldName = w ? (w.id || w.label || '???') : '???';
   var body = { name: name, score: pts, world: worldName };
 
   if (!SUPA_URL) { _localInsert(body, cb); return; }
@@ -1418,8 +1470,11 @@ function insertHighScore(name, pts, cb) {
     return fetch(SUPA_URL + '/rest/v1/scores?select=name,score,world,created_at&order=score.desc&limit=' + MAX_SCORES, {
       headers: _supaHeaders()
     });
-  }).then(function(r) { return r.json(); }).then(function(rows) {
-    _cachedScores = (rows || []).map(function(r) { return { name: r.name, score: r.score, world: r.world || '', date: r.created_at }; });
+  }).then(function(r) {
+    if (!r.ok) throw new Error('score refresh failed: ' + r.status);
+    return r.json();
+  }).then(function(rows) {
+    _cachedScores = Array.isArray(rows) ? rows.map(_normalizeScoreRow) : [];
     try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
     // Find rank of this score
     var rank = -1;
@@ -1484,25 +1539,55 @@ function submitHighScore() {
 
 function openScoreboard() {
   var body = document.getElementById('sb-body');
-  body.innerHTML = '<div class="sb-empty">LOADING...</div>';
+  body.textContent = '';
+
+  var loading = document.createElement('div');
+  loading.className = 'sb-empty';
+  loading.textContent = 'LOADING...';
+  body.appendChild(loading);
+
   document.getElementById('scoreboard-overlay').style.display = 'flex';
   loadHighScores(function(scores) {
+    body.textContent = '';
+
     if (!scores.length) {
-      body.innerHTML = '<div class="sb-empty">NO SCORES YET — PLAY TO CLAIM #1!</div>';
+      var empty = document.createElement('div');
+      empty.className = 'sb-empty';
+      empty.textContent = 'NO SCORES YET — PLAY TO CLAIM #1!';
+      body.appendChild(empty);
     } else {
-      var html = '<table class="sb-table">';
+      var table = document.createElement('table');
+      table.className = 'sb-table';
+
       for (var i = 0; i < scores.length; i++) {
-        var s = scores[i];
-        var hl = (i === _highlightIdx) ? ' class="sb-highlight"' : '';
-        html += '<tr' + hl + '>';
-        html += '<td class="sb-rank">' + (i + 1) + '.</td>';
-        html += '<td class="sb-name">' + (s.name || '???') + '</td>';
-        html += '<td class="sb-pts">' + s.score.toLocaleString() + '</td>';
-        html += '<td class="sb-world">' + (s.world || '') + '</td>';
-        html += '</tr>';
+        var s = _normalizeScoreRow(scores[i]);
+        var tr = document.createElement('tr');
+        if (i === _highlightIdx) tr.className = 'sb-highlight';
+
+        var rank = document.createElement('td');
+        rank.className = 'sb-rank';
+        rank.textContent = (i + 1) + '.';
+
+        var name = document.createElement('td');
+        name.className = 'sb-name';
+        name.textContent = s.name || '???';
+
+        var pts = document.createElement('td');
+        pts.className = 'sb-pts';
+        pts.textContent = s.score.toLocaleString();
+
+        var worldCell = document.createElement('td');
+        worldCell.className = 'sb-world';
+        worldCell.textContent = s.world || '';
+
+        tr.appendChild(rank);
+        tr.appendChild(name);
+        tr.appendChild(pts);
+        tr.appendChild(worldCell);
+        table.appendChild(tr);
       }
-      html += '</table>';
-      body.innerHTML = html;
+
+      body.appendChild(table);
     }
     _highlightIdx = -1;
   });
@@ -1538,7 +1623,7 @@ function restartGame() {
   disposeAllStormLines();
   for (var i = atoms.length - 1; i >= 0; i--) removeAtom(atoms[i]);
   atoms = [];
-  if (ghostMesh) { ghostMesh.dispose(); ghostMesh = null; }
+  if (ghostMesh) { disposeMeshWithMaterial(ghostMesh); ghostMesh = null; }
 
   initQueue();
   score        = 0;
@@ -1774,7 +1859,33 @@ function updatePhysicsFromUI() {
   document.getElementById('v-friction').textContent     = PHYSICS_PRESET.friction.toFixed(2);
 
   try {
-    scene.getPhysicsEngine().setGravity(vec3(0, -PHYSICS_PRESET.gravity, 0));
+    var pe = scene.getPhysicsEngine();
+    pe.setGravity(vec3(0, -PHYSICS_PRESET.gravity, 0));
+
+    var plugin = pe && pe.getPhysicsPlugin ? pe.getPhysicsPlugin() : (pe ? pe._physicsPlugin : null);
+    var cWorld = plugin && plugin.world;
+    if (cWorld && cWorld.defaultContactMaterial) {
+      cWorld.defaultContactMaterial.restitution = PHYSICS_PRESET.restitution;
+      cWorld.defaultContactMaterial.friction = PHYSICS_PRESET.friction;
+    }
+
+    // Existing Cannon bodies keep their material settings until explicitly updated.
+    for (var i = 0; i < atoms.length; i++) {
+      var imp = atoms[i].mesh && atoms[i].mesh.physicsImpostor;
+      if (!imp) continue;
+      try {
+        if (imp._options) {
+          imp._options.restitution = PHYSICS_PRESET.restitution;
+          imp._options.friction = PHYSICS_PRESET.friction;
+        }
+        var body = imp.physicsBody;
+        if (body && body.material) {
+          body.material.restitution = PHYSICS_PRESET.restitution;
+          body.material.friction = PHYSICS_PRESET.friction;
+        }
+        if (body) body.wakeUp();
+      } catch(inner) {}
+    }
   } catch(e){}
 }
 
