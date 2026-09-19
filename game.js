@@ -1095,6 +1095,10 @@ function doMerge(a, b) {
   var newElem = ELEMENT_DB[newTier] || ELEMENT_DB[a.tier];
   emitMergeBurst(mid, newElem.col, newElem.r);
   emitMergeRing(mid, newElem.col, newElem.r);
+  if (comboIndex >= 2 && getVfxTier() > 0) {
+    var comboColor = rotateHue(newElem.col, 45);
+    setTimeout(function() { emitMergeRing(mid, comboColor, newElem.r * 1.25); }, 55);
+  }
 
   setTimeout(function () {
     try {
