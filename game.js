@@ -1426,7 +1426,10 @@ function loadHighScores(cb) {
   if (!SUPA_URL) { _loadLocal(cb); return; }
   fetch(SUPA_URL + '/rest/v1/scores?select=name,score,world,created_at&order=score.desc&limit=' + MAX_SCORES, {
     headers: _supaHeaders()
-  }).then(function(r) { return r.json(); }).then(function(rows) {
+  }).then(function(r) {
+    if (!r.ok) throw new Error('score fetch failed: ' + r.status);
+    return r.json();
+  }).then(function(rows) {
     _cachedScores = Array.isArray(rows) ? rows.map(_normalizeScoreRow) : [];
     try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
     if (cb) cb(_cachedScores);
@@ -1467,7 +1470,10 @@ function insertHighScore(name, pts, cb) {
     return fetch(SUPA_URL + '/rest/v1/scores?select=name,score,world,created_at&order=score.desc&limit=' + MAX_SCORES, {
       headers: _supaHeaders()
     });
-  }).then(function(r) { return r.json(); }).then(function(rows) {
+  }).then(function(r) {
+    if (!r.ok) throw new Error('score refresh failed: ' + r.status);
+    return r.json();
+  }).then(function(rows) {
     _cachedScores = Array.isArray(rows) ? rows.map(_normalizeScoreRow) : [];
     try { localStorage.setItem('atomMerge_highScores', JSON.stringify(_cachedScores)); } catch(e) {}
     // Find rank of this score
@@ -1853,7 +1859,33 @@ function updatePhysicsFromUI() {
   document.getElementById('v-friction').textContent     = PHYSICS_PRESET.friction.toFixed(2);
 
   try {
-    scene.getPhysicsEngine().setGravity(vec3(0, -PHYSICS_PRESET.gravity, 0));
+    var pe = scene.getPhysicsEngine();
+    pe.setGravity(vec3(0, -PHYSICS_PRESET.gravity, 0));
+
+    var plugin = pe && pe.getPhysicsPlugin ? pe.getPhysicsPlugin() : (pe ? pe._physicsPlugin : null);
+    var cWorld = plugin && plugin.world;
+    if (cWorld && cWorld.defaultContactMaterial) {
+      cWorld.defaultContactMaterial.restitution = PHYSICS_PRESET.restitution;
+      cWorld.defaultContactMaterial.friction = PHYSICS_PRESET.friction;
+    }
+
+    // Existing Cannon bodies keep their material settings until explicitly updated.
+    for (var i = 0; i < atoms.length; i++) {
+      var imp = atoms[i].mesh && atoms[i].mesh.physicsImpostor;
+      if (!imp) continue;
+      try {
+        if (imp._options) {
+          imp._options.restitution = PHYSICS_PRESET.restitution;
+          imp._options.friction = PHYSICS_PRESET.friction;
+        }
+        var body = imp.physicsBody;
+        if (body && body.material) {
+          body.material.restitution = PHYSICS_PRESET.restitution;
+          body.material.friction = PHYSICS_PRESET.friction;
+        }
+        if (body) body.wakeUp();
+      } catch(inner) {}
+    }
   } catch(e){}
 }
 
