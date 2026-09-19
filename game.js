@@ -1273,7 +1273,7 @@ function emitMergeRing(position, color, radius) {
 
   ring.animations = [scaleAnim, alphaAnim];
   scene.beginAnimation(ring, 0, frames, false, 1.0, function () {
-    ring.dispose();
+    disposeMeshWithMaterial(ring);
   });
 }
 
@@ -1541,6 +1541,9 @@ function disposeAllStormLines() {
     if (pairFx.arc) try { pairFx.arc.dispose(); } catch(e){}
   }
   stormPairs = {};
+  for (var mk in stormMatCache) {
+    try { stormMatCache[mk].dispose(); } catch(e) {}
+  }
   stormMatCache = {};
 }
 
