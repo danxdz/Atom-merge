@@ -5,6 +5,19 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const FILE = path.join(__dirname, 'scores.json');
 
+// Optional staging protection. Production stays public when TEST_PASSWORD is unset.
+const TEST_PASSWORD = process.env.TEST_PASSWORD || '';
+if (TEST_PASSWORD) {
+  app.use((req, res, next) => {
+    const header = req.headers.authorization || '';
+    const expected = 'Basic ' + Buffer.from('tester:' + TEST_PASSWORD).toString('base64');
+    if (header === expected) return next();
+
+    res.setHeader('WWW-Authenticate', 'Basic realm="Atom Merge Staging", charset="UTF-8"');
+    return res.status(401).send('Atom Merge staging — login required');
+  });
+}
+
 app.use(express.json());
 
 // CORS — allow any origin (static site calls this)
@@ -41,4 +54,25 @@ app.post('/api/scores', (req, res) => {
   res.json({ rank: idx, scores });
 });
 
-app.listen(PORT, () => console.log('Scores API on port ' + PORT));
+// Serve the browser game from this repository.
+app.use(express.static(__dirname, {
+  dotfiles: 'ignore',
+  index: 'index.html',
+  fallthrough: true,
+  setHeaders(res, filePath) {
+    // Prevent stale game JS during rapid staging iterations.
+    if (/\.(?:js|json|html)$/i.test(filePath)) {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+  }
+}));
+
+// SPA-style fallback to the game shell for ordinary browser paths.
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.listen(PORT, () => {
+  console.log('Atom Merge on port ' + PORT + (TEST_PASSWORD ? ' (password protected)' : ' (public)'));
+});
