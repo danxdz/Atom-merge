@@ -11,7 +11,7 @@
     /* ── Starfield ── */
     #starfield {
       position:fixed;top:0;left:0;width:100%;height:100%;
-      z-index:4;pointer-events:none;opacity:0.4;
+      z-index:4;pointer-events:none;opacity:0.62;
     }
 
     /* ── Ambient background blobs ── */
@@ -32,6 +32,25 @@
     @keyframes drift3{0%{transform:translate(0,0) scale(0.9)}100%{transform:translate(-10vw,18vh) scale(1.2)}}
     @keyframes drift4{0%{transform:translate(0,0) scale(1.1)}100%{transform:translate(16vw,-10vh) scale(0.95)}}
     @keyframes drift5{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-8vw,14vh) scale(1.12)}}
+
+    /* Rare ambient comet: decorative only, intentionally subtle. */
+    .ambient-comet{
+      --comet-angle:18deg;
+      position:fixed;z-index:5;pointer-events:none;
+      width:90px;height:1px;border-radius:2px;
+      background:linear-gradient(90deg,transparent,var(--world-accent,#4488ff),rgba(255,255,255,.9));
+      box-shadow:0 0 8px var(--world-accent,#4488ff);
+      opacity:0;
+      transform:rotate(var(--comet-angle));
+      animation:ambient-comet-flight 1.75s ease-out forwards;
+    }
+    @keyframes ambient-comet-flight{
+      0%{opacity:0;transform:translate3d(0,0,0) rotate(var(--comet-angle)) scaleX(.45)}
+      12%{opacity:.42}
+      100%{opacity:0;transform:translate3d(125vw,34vh,0) rotate(var(--comet-angle)) scaleX(1)}
+    }
+    @media(prefers-reduced-motion:reduce){.ambient-comet{display:none}.bg-blob{animation:none!important}}
+
     body{font-family:system-ui,-apple-system,sans-serif;color:#ddddf0}
 
     /* ── Canvas ── */
@@ -350,6 +369,16 @@
       </select>
     </div>
 
+    <div class="ct" style="margin-top:14px">✨ Visuals</div>
+    <div class="cr">
+      <span>VFX</span>
+      <select id="cfg-vfx" onchange="setVfxQualityFromUI(this.value)">
+        <option value="auto">Auto</option>
+        <option value="low">Low</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+
     <div class="ct" style="margin-top:14px">⚛ Elements</div>
     <div id="legend"></div>
     <div style="margin-top:16px;text-align:center">
@@ -428,8 +457,8 @@
   <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/babylonjs@5/babylon.js"></script>
   <!-- Game -->
-  <script src="./config.js?v=18"></script>
-  <script src="./molecules.js?v=18"></script>
-  <script src="./game.js?v=18"></script>
+  <script src="./config.js?v=19"></script>
+  <script src="./molecules.js?v=19"></script>
+  <script src="./game.js?v=19"></script>
 </body>
 </html>
