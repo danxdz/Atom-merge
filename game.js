@@ -22,6 +22,10 @@ var texCache    = {};
 var matCache    = {};
 var atomIdSeq   = 0;
 var queueMeshes = [null, null, null]; // 3D preview spheres
+var recentSameTierContacts = {};       // Cannon contact memory for reliable merges
+var MERGE_CONTACT_MEMORY_MS = 220;     // remember a real contact briefly after bounce
+var starfieldRefreshTheme = null;
+var ambientCometTimer = null;
 
 /* ── Helpers ────────────────────────────────────────────────── */
 function hex3(hex) {
@@ -69,6 +73,30 @@ function initQueue()   { dropQueue = []; for (var i = 0; i < 4; i++) dropQueue.p
 function advanceQueue(){ dropQueue.shift(); dropQueue.push(randDrop()); }
 function currentTierFromQueue() { return dropQueue[0]; }
 function vec3(x,y,z)   { return new BABYLON.Vector3(x, y, z); }
+
+function getVfxMode() {
+  try { return localStorage.getItem('atomMerge_vfx') || 'auto'; } catch(e) { return 'auto'; }
+}
+function getVfxTier() {
+  var mode = getVfxMode();
+  if (mode === 'low') return 0;
+  if (mode === 'high') return 2;
+  try {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 0;
+  } catch(e) {}
+  var mem = navigator.deviceMemory || 8;
+  return (mem <= 4 || window.innerWidth < 430) ? 1 : 2;
+}
+function syncVfxUI() {
+  var el = document.getElementById('cfg-vfx');
+  if (el) el.value = getVfxMode();
+}
+function setVfxQualityFromUI(value) {
+  try { localStorage.setItem('atomMerge_vfx', value); } catch(e) {}
+  syncVfxUI();
+  disposeAllStormLines();
+  if (starfieldRefreshTheme) starfieldRefreshTheme();
+}
 
 /* ── Persistence ───────────────────────────────────────────── */
 function saveGame() {
@@ -148,9 +176,11 @@ async function boot() {
   buildScene();
   applyWorldTheme();
   initStarfield();
+  startAmbientComets();
   setupInput(canvas);
   populateWorldSelector();
   buildLegend();
+  syncVfxUI();
   loadHighScores(); // pre-fetch server scores into cache
   checkServerStatus(); // ping scores server
 
@@ -195,7 +225,7 @@ async function boot() {
         var imp = at.mesh.physicsImpostor;
         if (!imp || !imp.physicsBody) {
           console.warn('Re-adding physics to stuck atom', at.id);
-          addPhysicsToAtom(at.mesh, at.elem);
+          addPhysicsToAtom(at.mesh, at.elem, at);
           imp = at.mesh.physicsImpostor;
         }
         var body = imp.physicsBody;
@@ -254,6 +284,7 @@ function buildScene() {
   texCache = {};
   matCache = {};
   atoms    = [];
+  recentSameTierContacts = {};
   merging  = false;
   dangerStart = 0;
 
@@ -457,18 +488,47 @@ function spawnAtom(tier, x, y, z, skipAnim) {
     sp.animations = [anim];
     scene.beginAnimation(sp, 0, 9, false, 1.0, function() {
       // Create impostor only after animation finishes — no ghost overlaps
-      addPhysicsToAtom(sp, elem);
+      addPhysicsToAtom(sp, elem, atom);
     });
   } else {
     // Merged atoms: full size immediately, physics body right away
-    addPhysicsToAtom(sp, elem);
+    addPhysicsToAtom(sp, elem, atom);
   }
 
   return atom;
 }
 
-function addPhysicsToAtom(sp, elem) {
-  // Linear mass — avoids huge mass ratios that make big atoms immovable
+function mergePairKey(a, b) {
+  return a.id < b.id ? a.id + '_' + b.id : b.id + '_' + a.id;
+}
+
+function rememberSameTierContact(a, b) {
+  if (!a || !b || a === b) return;
+  if (a.tier !== b.tier || a.tier >= ELEMENT_DB.length - 1) return;
+  recentSameTierContacts[mergePairKey(a, b)] = performance.now();
+}
+
+function bindAtomCollision(atom) {
+  if (!atom || !atom.mesh || !atom.mesh.physicsImpostor) return;
+  try {
+    var body = atom.mesh.physicsImpostor.physicsBody;
+    if (!body) return;
+    body._atomRef = atom;
+    if (body._atomMergeListenerBound) return;
+    body._atomMergeListenerBound = true;
+    body.addEventListener('collide', function(evt) {
+      var otherBody = evt && evt.body;
+      if (!otherBody && evt && evt.contact) {
+        otherBody = evt.contact.bi === body ? evt.contact.bj : evt.contact.bi;
+      }
+      var other = otherBody && otherBody._atomRef;
+      if (other) rememberSameTierContact(atom, other);
+    });
+  } catch(e) {}
+}
+
+function addPhysicsToAtom(sp, elem, atom) {
+  // Physics values are unchanged; the collision listener only improves merge detection.
   var mass = 0.5 + elem.r * 2;
   sp.physicsImpostor = new BABYLON.PhysicsImpostor(sp,
     BABYLON.PhysicsImpostor.SphereImpostor,
@@ -481,6 +541,7 @@ function addPhysicsToAtom(sp, elem) {
     sp.physicsImpostor.physicsBody.linearDamping = 0.12;
     sp.physicsImpostor.physicsBody.allowSleep = false;
     sp.physicsImpostor.physicsBody.position.z = 0;
+    bindAtomCollision(atom);
   } catch(e) {}
 }
 
@@ -750,6 +811,7 @@ function continueToNextWorld() {
   merging     = false;
   moleculeCooldowns = {};
   reservedAtoms = {};
+  recentSameTierContacts = {};
   comboIndex = 0;
   globalMolCooldownEnd = 0;
 
@@ -786,6 +848,7 @@ function wakeNearby(x, y, radius) {
 function checkMerges() {
   if (gameIsOver) return;
   var pairs = [];
+  var now = performance.now();
 
   for (var i = 0; i < atoms.length; i++) {
     var a = atoms[i];
@@ -799,11 +862,27 @@ function checkMerges() {
       var d = BABYLON.Vector3.Distance(
         a.mesh.getAbsolutePosition(),
         b.mesh.getAbsolutePosition());
-      if (d <= (a.r + b.r) * 1.15) {
+      var sumR = a.r + b.r;
+      var key = mergePairKey(a, b);
+      var contactAt = recentSameTierContacts[key] || 0;
+      var hadRecentContact = contactAt && (now - contactAt <= MERGE_CONTACT_MEMORY_MS);
+
+      // Normal merge rule stays exactly the same. The second clause only catches
+      // atoms that Cannon actually reported colliding but which rebounded between scans.
+      if (d <= sumR * 1.15 || (hadRecentContact && d <= sumR * 1.45)) {
         pairs.push([a, b]);
+        delete recentSameTierContacts[key];
       }
     }
   }
+
+  // Keep the contact map tiny.
+  for (var ck in recentSameTierContacts) {
+    if (now - recentSameTierContacts[ck] > MERGE_CONTACT_MEMORY_MS * 2) {
+      delete recentSameTierContacts[ck];
+    }
+  }
+
   // Process all merge pairs — mark both atoms immediately
   for (var k = 0; k < pairs.length; k++) {
     var p = pairs[k];
@@ -1142,9 +1221,9 @@ function emitMergeBurst(position, color, radius) {
   // Additive blending for glow effect
   ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
 
-  // Emit 50 particles in one burst then stop
+  // Visual quality only; gameplay is unaffected.
   ps.emitRate = 200;
-  ps.manualEmitCount = 50;
+  ps.manualEmitCount = getVfxTier() === 0 ? 18 : (getVfxTier() === 2 ? 50 : 32);
   ps.targetStopDuration = 0.08;
   ps.disposeOnStop = true;
 
@@ -1194,10 +1273,59 @@ function emitMergeRing(position, color, radius) {
   });
 }
 
+function emitMoleculeHalo(position, color, radius) {
+  if (!scene || getVfxTier() === 0) {
+    emitMergeRing(position, color, radius * 1.25);
+    return;
+  }
+
+  var c = hex3(color);
+  var ringCount = getVfxTier() === 2 ? 3 : 2;
+  for (var i = 0; i < ringCount; i++) {
+    (function(idx) {
+      var ring = BABYLON.MeshBuilder.CreateTorus('molHalo', {
+        diameter: Math.max(0.35, radius * (0.45 + idx * 0.16)),
+        thickness: 0.045,
+        tessellation: 32
+      }, scene);
+      ring.position = position.clone();
+      ring.position.z = 0.55 + idx * 0.03;
+      ring.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+      ring.isPickable = false;
+
+      var mat = new BABYLON.StandardMaterial('molHaloM', scene);
+      mat.emissiveColor = c;
+      mat.diffuseColor = c.scale(0.25);
+      mat.alpha = 0.65 - idx * 0.12;
+      mat.disableLighting = true;
+      ring.material = mat;
+
+      var frames = 32 + idx * 6;
+      var scaleAnim = new BABYLON.Animation('molHaloScale', 'scaling', 60,
+        BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+        BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+      scaleAnim.setKeys([
+        { frame:0, value:vec3(0.5,0.5,0.5) },
+        { frame:frames, value:vec3(5.5 + idx,5.5 + idx,5.5 + idx) }
+      ]);
+      var alphaAnim = new BABYLON.Animation('molHaloAlpha', 'material.alpha', 60,
+        BABYLON.Animation.ANIMATIONTYPE_FLOAT,
+        BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+      alphaAnim.setKeys([
+        { frame:0, value:mat.alpha },
+        { frame:frames, value:0 }
+      ]);
+      ring.animations = [scaleAnim, alphaAnim];
+      scene.beginAnimation(ring, 0, frames, false, 1, function() {
+        disposeMeshWithMaterial(ring);
+      });
+    })(i);
+  }
+}
+
 /* ── Lorenz Spark Storm — Oriented Particle Dots with Oscillation ── */
-var stormPairs = {};          // key: "idA_idB" → { dots[], birthTime }
+var stormPairs = {};          // key: "idA_idB" → { dots[], arc, birthTime }
 var STORM_PROXIMITY = 1.6;   // trigger when dist < sumR * this
-var STORM_DOT_COUNT = 35;    // particle dots per pair
 var STORM_DT = 0.007;        // Lorenz integrator timestep
 var STORM_DOT_SIZE = 0.032;  // base dot radius (tiny)
 var stormMatCache = {};
@@ -1246,6 +1374,50 @@ function getStormDotMat(color) {
   return m;
 }
 
+function getStormDotCount() {
+  return getVfxTier() === 0 ? 6 : (getVfxTier() === 2 ? 20 : 12);
+}
+
+function buildEnergyArcPoints(info) {
+  var pts = [];
+  var segments = getVfxTier() === 2 ? 7 : 5;
+  for (var i = 0; i <= segments; i++) {
+    var t = i / segments;
+    var p = BABYLON.Vector3.Lerp(info.posA, info.posB, t);
+    if (i > 0 && i < segments) {
+      var envelope = Math.sin(Math.PI * t);
+      var jitter = (Math.random() - 0.5) * info.sumR * 0.22 * envelope;
+      p = p.add(info.perpDir.scale(jitter));
+      p.z = 0.45 + Math.random() * 0.12;
+    } else {
+      p.z = 0.45;
+    }
+    pts.push(p);
+  }
+  return pts;
+}
+
+function updateEnergyArc(pair, info) {
+  if (getVfxTier() === 0) {
+    if (pair.arc) { try { pair.arc.dispose(); } catch(e){} pair.arc = null; }
+    return;
+  }
+  pair.arcTick = (pair.arcTick || 0) + 1;
+  if (pair.arc && pair.arcTick % 2 !== 0) return;
+
+  var pts = buildEnergyArcPoints(info);
+  try {
+    if (pair.arc) {
+      BABYLON.MeshBuilder.CreateLines('mergeArc', { points:pts, instance:pair.arc }, scene);
+    } else {
+      pair.arc = BABYLON.MeshBuilder.CreateLines('mergeArc', { points:pts, updatable:true }, scene);
+      pair.arc.isPickable = false;
+    }
+    pair.arc.color = hex3(info.color);
+    pair.arc.alpha = 0.18 + info.closeness * 0.55;
+  } catch(e) {}
+}
+
 function updateStormLines(dtSec) {
   stormTime += (dtSec || 0.016);
 
@@ -1287,6 +1459,7 @@ function updateStormLines(dtSec) {
         activePairs[key] = {
           mid: mid, radius: effR, color: ELEMENT_DB[a.tier].col,
           closeness: closeness, sumR: sumR,
+          posA: posA.clone(), posB: posB.clone(),
           axisDir: axis, perpDir: perp, depthDir: depth
         };
       }
@@ -1297,24 +1470,29 @@ function updateStormLines(dtSec) {
   for (var key in activePairs) {
     if (!stormPairs[key]) {
       var dots = [];
-      for (var k = 0; k < STORM_DOT_COUNT; k++) {
+      var dotCount = getStormDotCount();
+      for (var k = 0; k < dotCount; k++) {
         dots.push(createStormDot());
       }
-      stormPairs[key] = { dots: dots, birthTime: stormTime };
+      stormPairs[key] = { dots: dots, arc: null, arcTick: 0, birthTime: stormTime };
     }
   }
 
   // Update existing, remove stale
   for (var key in stormPairs) {
     if (!activePairs[key]) {
-      var ds = stormPairs[key].dots;
+      var stalePair = stormPairs[key];
+      var ds = stalePair.dots;
       for (var k = 0; k < ds.length; k++) { if (ds[k].mesh) try { ds[k].mesh.dispose(); } catch(e){} }
+      if (stalePair.arc) try { stalePair.arc.dispose(); } catch(e){}
       delete stormPairs[key];
       continue;
     }
 
     var info = activePairs[key];
-    var ds   = stormPairs[key].dots;
+    var pairFx = stormPairs[key];
+    updateEnergyArc(pairFx, info);
+    var ds   = pairFx.dots;
     var baseAlpha = 0.4 + info.closeness * 0.6;
     var dotScale = (STORM_DOT_SIZE + info.sumR * 0.015) * (0.6 + info.closeness * 0.4);
 
@@ -1353,8 +1531,10 @@ function updateStormLines(dtSec) {
 
 function disposeAllStormLines() {
   for (var key in stormPairs) {
-    var ds = stormPairs[key].dots;
+    var pairFx = stormPairs[key];
+    var ds = pairFx.dots;
     for (var k = 0; k < ds.length; k++) { if (ds[k].mesh) try { ds[k].mesh.dispose(); } catch(e){} }
+    if (pairFx.arc) try { pairFx.arc.dispose(); } catch(e){}
   }
   stormPairs = {};
   stormMatCache = {};
@@ -1635,6 +1815,7 @@ function restartGame() {
   merging      = false;
   moleculeCooldowns = {};
   reservedAtoms = {};
+  recentSameTierContacts = {};
   comboIndex = 0;
   globalMolCooldownEnd = 0;
   sessionStats = { merges: 0, molecules: 0, highestTier: 0, totalEnergy: 0, dropsCount: 0 };
@@ -1960,6 +2141,7 @@ function applyWorldTheme() {
   var theme = w.theme;
   var bg = theme.bgColor || '#111122';
   var accent = theme.accentColor || '#4488ff';
+  document.documentElement.style.setProperty('--world-accent', accent);
 
   var lighter = mixWithWhite(bg, 0.35);
   var darker = darkenHex(bg, 0.5);
@@ -1979,74 +2161,151 @@ function applyWorldTheme() {
   var blobs = document.querySelectorAll('.bg-blob');
   for (var i = 0; i < blobs.length && i < blobColors.length; i++) {
     blobs[i].style.background = blobColors[i];
-    blobs[i].style.opacity = '0.12';
+    blobs[i].style.opacity = '0.075';
   }
+  if (starfieldRefreshTheme) starfieldRefreshTheme();
 }
 
 /* ── Starfield background ──────────────────────────────────── */
 var starfieldStars = [];
+var starfieldNebula = [];
+
+function seededVfxRandom(seed) {
+  var state = (seed >>> 0) || 1;
+  return function() {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+function hexToCanvasRgba(hex, alpha) {
+  var h = String(hex || '#4488ff').replace('#','');
+  if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  var r = parseInt(h.slice(0,2),16) || 0;
+  var g = parseInt(h.slice(2,4),16) || 0;
+  var b = parseInt(h.slice(4,6),16) || 0;
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+}
+
 function initStarfield() {
   var canvas = document.getElementById('starfield');
   if (!canvas) return;
   var ctx = canvas.getContext('2d');
   var dpr = window.devicePixelRatio || 1;
 
-  function resize() {
-    dpr = window.devicePixelRatio || 1;
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
-    canvas.style.width = window.innerWidth + 'px';
-    canvas.style.height = window.innerHeight + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    draw();
-  }
+  function makeBackdrop() {
+    var w = WORLDS_DATA[worldIdx] || {};
+    var theme = w.theme || {};
+    var accent = theme.accentColor || '#4488ff';
+    var accent2 = rotateHue(accent, 55 + worldIdx * 11);
+    var rand = seededVfxRandom(1337 + worldIdx * 977);
+    var tier = getVfxTier();
 
-  function makeStars() {
     starfieldStars = [];
-    for (var i = 0; i < 120; i++) {
+    var starCount = tier === 0 ? 55 : (tier === 2 ? 145 : 95);
+    for (var i = 0; i < starCount; i++) {
       starfieldStars.push({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        r: 0.5 + Math.random() * 1.5,
-        o: 0.2 + Math.random() * 0.6
+        x: rand() * window.innerWidth,
+        y: rand() * window.innerHeight,
+        r: 0.35 + rand() * (tier === 2 ? 1.45 : 1.0),
+        o: 0.12 + rand() * 0.52,
+        phase: rand() * Math.PI * 2
+      });
+    }
+
+    starfieldNebula = [];
+    var cloudCount = tier === 0 ? 2 : (tier === 2 ? 5 : 3);
+    for (var n = 0; n < cloudCount; n++) {
+      starfieldNebula.push({
+        x: (0.08 + rand() * 0.84) * window.innerWidth,
+        y: (0.08 + rand() * 0.84) * window.innerHeight,
+        rx: (0.18 + rand() * 0.30) * window.innerWidth,
+        ry: (0.12 + rand() * 0.24) * window.innerHeight,
+        alpha: (tier === 2 ? 0.085 : 0.06) + rand() * 0.035,
+        color: n % 2 ? accent2 : accent
       });
     }
   }
 
+  function drawNebula() {
+    for (var i = 0; i < starfieldNebula.length; i++) {
+      var n = starfieldNebula[i];
+      ctx.save();
+      ctx.translate(n.x, n.y);
+      ctx.scale(1, Math.max(0.25, n.ry / Math.max(1, n.rx)));
+      var g = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(40, n.rx));
+      g.addColorStop(0, hexToCanvasRgba(n.color, n.alpha));
+      g.addColorStop(0.42, hexToCanvasRgba(n.color, n.alpha * 0.45));
+      g.addColorStop(1, hexToCanvasRgba(n.color, 0));
+      ctx.fillStyle = g;
+      ctx.fillRect(-n.rx, -n.rx, n.rx * 2, n.rx * 2);
+      ctx.restore();
+    }
+  }
+
   function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    drawNebula();
+
     for (var i = 0; i < starfieldStars.length; i++) {
-      var s = starfieldStars[i];
+      var st = starfieldStars[i];
       ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,' + s.o.toFixed(2) + ')';
+      ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + st.o.toFixed(2) + ')';
       ctx.fill();
     }
   }
 
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(window.innerWidth * dpr);
+    canvas.height = Math.round(window.innerHeight * dpr);
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    makeBackdrop();
+    draw();
+  }
+
   function twinkle() {
     for (var i = 0; i < starfieldStars.length; i++) {
-      starfieldStars[i].o = Math.max(0.15, Math.min(0.85,
-        starfieldStars[i].o + (Math.random() * 0.3 - 0.15)));
+      starfieldStars[i].o = Math.max(0.10, Math.min(0.72,
+        starfieldStars[i].o + (Math.random() * 0.18 - 0.09)));
     }
     draw();
   }
 
-  canvas.width = window.innerWidth * dpr;
-  canvas.height = window.innerHeight * dpr;
-  canvas.style.width = window.innerWidth + 'px';
-  canvas.style.height = window.innerHeight + 'px';
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  makeStars();
-  draw();
-
-  window.addEventListener('resize', function() {
-    resize();
-    makeStars();
+  starfieldRefreshTheme = function() {
+    makeBackdrop();
     draw();
-  });
+  };
 
-  setInterval(twinkle, 3000);
+  resize();
+  window.addEventListener('resize', resize);
+  setInterval(twinkle, getVfxTier() === 0 ? 5000 : 2600);
+}
+
+function spawnAmbientComet() {
+  if (getVfxTier() === 0 || document.hidden) return;
+  var el = document.createElement('div');
+  el.className = 'ambient-comet';
+  el.style.top = (8 + Math.random() * 52) + 'vh';
+  el.style.left = (-8 - Math.random() * 12) + 'vw';
+  el.style.setProperty('--comet-angle', (10 + Math.random() * 16) + 'deg');
+  document.body.appendChild(el);
+  setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 1900);
+}
+
+function startAmbientComets() {
+  if (ambientCometTimer) clearTimeout(ambientCometTimer);
+  function schedule() {
+    var delay = getVfxTier() === 2 ? 9000 + Math.random() * 10000 : 16000 + Math.random() * 14000;
+    ambientCometTimer = setTimeout(function() {
+      spawnAmbientComet();
+      schedule();
+    }, delay);
+  }
+  schedule();
 }
 
 function setWorldFromUI(idx) {
@@ -2057,6 +2316,7 @@ function setWorldFromUI(idx) {
   buildLegend();
   populateWorldSelector();
   syncPhysicsUI();
+  syncVfxUI();
   restartGame();
 }
 
