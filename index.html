@@ -1,464 +1,271 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Atom Merge</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#050817">
+  <meta name="description" content="Atom Merge has evolved into ATOMS. Preview the new game and continue on the current version.">
+  <link rel="canonical" href="https://atoms.adapteit.com/">
+  <title>ATOMS — New Version</title>
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    html,body{width:100%;height:100%;overflow:hidden;background:#111122;transition:background 1.5s ease}
+    :root{
+      --bg:#050817;
+      --panel:rgba(10,14,31,.88);
+      --panel2:rgba(7,10,24,.94);
+      --line:rgba(255,255,255,.08);
+      --text:#f5f7ff;
+      --muted:#8e99b5;
+      --accent:#63e7ff;
+      --accent2:#7b7cff;
+      --energy:#ffd45e;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{min-height:100svh;overflow-x:hidden}
+    .bg{
+      position:fixed;inset:0;pointer-events:none;overflow:hidden;
+      background:
+        radial-gradient(circle at 18% 14%,rgba(70,98,255,.16),transparent 28%),
+        radial-gradient(circle at 82% 78%,rgba(0,224,210,.10),transparent 30%),
+        linear-gradient(180deg,#080b1d 0%,#040714 62%,#03050e 100%);
+    }
+    .grid{
+      position:absolute;inset:0;opacity:.16;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+      background-size:42px 42px;
+      mask-image:linear-gradient(to bottom,transparent,black 20%,black 75%,transparent);
+    }
+    .stars{position:absolute;inset:0}
+    .stars:before,.stars:after{
+      content:"";position:absolute;inset:-20%;
+      background-image:
+        radial-gradient(circle,#fff 0 1px,transparent 1.4px),
+        radial-gradient(circle,#82ddff 0 1px,transparent 1.3px);
+      background-size:91px 91px,137px 137px;
+      background-position:0 0,37px 21px;
+      opacity:.18;
+      animation:drift 28s linear infinite;
+    }
+    .stars:after{opacity:.09;transform:scale(1.22);animation-duration:44s}
+    @keyframes drift{to{transform:translate3d(42px,25px,0)}}
 
-    /* ── Starfield ── */
-    #starfield {
-      position:fixed;top:0;left:0;width:100%;height:100%;
-      z-index:4;pointer-events:none;opacity:0.62;
+    main{
+      position:relative;z-index:1;
+      width:min(1080px,calc(100% - 28px));
+      min-height:100svh;margin:auto;
+      display:grid;grid-template-columns:minmax(0,.9fr) minmax(360px,1.1fr);
+      gap:54px;align-items:center;padding:42px 0;
     }
+    .copy{max-width:470px}
+    .eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border:1px solid rgba(99,231,255,.18);
+      border-radius:999px;background:rgba(99,231,255,.055);
+      color:#aeefff;font-size:10px;font-weight:850;letter-spacing:.16em;
+      text-transform:uppercase
+    }
+    .eyebrow i{
+      width:6px;height:6px;border-radius:50%;background:var(--accent);
+      box-shadow:0 0 12px var(--accent)
+    }
+    h1{
+      margin:14px 0 8px;font-size:clamp(43px,7vw,78px);line-height:.94;
+      letter-spacing:-.055em;font-weight:950
+    }
+    h1 span{
+      background:linear-gradient(110deg,#fff 15%,#a8f2ff 48%,#9a9cff 78%);
+      -webkit-background-clip:text;background-clip:text;color:transparent
+    }
+    .lead{
+      margin:0;max-width:430px;color:#aab3cc;
+      font-size:clamp(14px,2vw,17px);line-height:1.55
+    }
+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:24px}
+    .play{
+      display:inline-flex;align-items:center;justify-content:center;gap:9px;
+      min-height:46px;padding:0 19px;border-radius:12px;text-decoration:none;
+      color:#07101d;font-size:13px;font-weight:900;letter-spacing:.015em;
+      background:linear-gradient(135deg,#8ff2ff,#a6ffbc);
+      box-shadow:0 11px 34px rgba(92,230,228,.18),0 0 0 1px rgba(255,255,255,.06) inset;
+      transition:transform .16s ease,filter .16s ease
+    }
+    .play:hover{transform:translateY(-2px);filter:brightness(1.06)}
+    .play:active{transform:translateY(0) scale(.98)}
+    .archive{color:#69738e;font-size:10px}
 
-    /* ── Ambient background blobs ── */
-    .bg-blob{
-      position:fixed;border-radius:50%;pointer-events:none;
-      filter:blur(100px);opacity:0.18;z-index:5;
-      will-change:transform;
-      transition:background 1.5s ease;
+    .preview-wrap{position:relative;perspective:1100px}
+    .preview-glow{
+      position:absolute;inset:12% 5% 7%;border-radius:50%;
+      background:rgba(63,167,255,.13);filter:blur(58px);pointer-events:none
     }
-    .bg-blob:nth-of-type(1){width:45vw;height:45vw;background:#6644ff;top:-10%;left:-10%;animation:drift1 38s ease-in-out infinite alternate}
-    .bg-blob:nth-of-type(2){width:55vw;height:55vw;background:#22ddaa;bottom:-15%;right:-15%;animation:drift2 44s ease-in-out infinite alternate}
-    .bg-blob:nth-of-type(3){width:40vw;height:40vw;background:#ff4488;top:40%;left:50%;animation:drift3 50s ease-in-out infinite alternate}
-    .bg-blob:nth-of-type(4){width:50vw;height:50vw;background:#ffaa22;bottom:20%;left:-20%;animation:drift4 42s ease-in-out infinite alternate}
-    .bg-blob:nth-of-type(5){width:35vw;height:35vw;background:#4488ff;top:10%;right:10%;animation:drift5 46s ease-in-out infinite alternate}
+    .preview{
+      position:relative;width:100%;aspect-ratio:10/13;min-height:520px;
+      border:1px solid rgba(255,255,255,.10);border-radius:25px;overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 24%,rgba(68,102,255,.12),transparent 34%),
+        linear-gradient(180deg,#080d25,#050817 56%,#040612);
+      box-shadow:0 34px 100px rgba(0,0,0,.46),0 0 0 1px rgba(255,255,255,.02) inset;
+      transform:rotateY(-3deg) rotateX(1deg);
+    }
+    .hud{
+      position:absolute;top:0;left:50%;transform:translateX(-50%);
+      width:min(92%,440px);height:57px;padding:7px 10px 6px;
+      border:1px solid rgba(255,255,255,.075);border-top:0;border-radius:0 0 14px 14px;
+      background:linear-gradient(180deg,rgba(11,13,29,.94),rgba(7,9,22,.84));
+      box-shadow:0 9px 28px rgba(0,0,0,.23);backdrop-filter:blur(12px)
+    }
+    .hud-top,.hud-bot{display:flex;align-items:center}
+    .hud-top{height:27px;justify-content:space-between}
+    .score{font-size:13px;font-weight:900}.world{font-size:9px;color:#dce1f5;font-weight:780}
+    .icons{font-size:11px;letter-spacing:5px;color:#bac2d8}
+    .hud-bot{height:19px;border-top:1px solid rgba(255,255,255,.04);gap:7px}
+    .bar{height:6px;flex:1;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+    .bar b{display:block;width:69%;height:100%;background:linear-gradient(90deg,#f5a623,#f7d55a);box-shadow:0 0 9px rgba(247,201,72,.3)}
+    .energy{font-size:9px;color:#f7cf62;font-weight:900}.target{font-size:8px;color:#eddb9e}
 
-    @keyframes drift1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(12vw,15vh) scale(1.15)}}
-    @keyframes drift2{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-14vw,-12vh) scale(1.1)}}
-    @keyframes drift3{0%{transform:translate(0,0) scale(0.9)}100%{transform:translate(-10vw,18vh) scale(1.2)}}
-    @keyframes drift4{0%{transform:translate(0,0) scale(1.1)}100%{transform:translate(16vw,-10vh) scale(0.95)}}
-    @keyframes drift5{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-8vw,14vh) scale(1.12)}}
+    .chamber{
+      position:absolute;left:50%;bottom:32px;transform:translateX(-50%);
+      width:63%;height:77%;
+      border-left:1px solid rgba(118,163,255,.23);
+      border-right:1px solid rgba(118,163,255,.23);
+      border-bottom:1px solid rgba(118,163,255,.23);
+      border-radius:0 0 20px 20px;
+      box-shadow:inset 0 -40px 80px rgba(14,30,80,.12),0 0 30px rgba(56,105,255,.05)
+    }
+    .danger{
+      position:absolute;left:7%;right:7%;top:16%;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(255,93,83,.42),transparent)
+    }
+    .atom{
+      --s:58px;position:absolute;width:var(--s);height:var(--s);border-radius:50%;
+      display:grid;place-items:center;font-size:16px;font-weight:950;color:#07101d;
+      box-shadow:
+        inset -9px -12px 18px rgba(0,0,0,.19),
+        inset 7px 7px 13px rgba(255,255,255,.34),
+        0 9px 18px rgba(0,0,0,.28),
+        0 0 16px color-mix(in srgb,var(--c) 34%,transparent);
+      background:radial-gradient(circle at 34% 28%,#fff 0 5%,var(--c) 17%,color-mix(in srgb,var(--c) 70%,#102040) 78%);
+      animation:float 4.6s ease-in-out infinite alternate
+    }
+    .a1{--s:72px;--c:#ffd955;left:18%;bottom:4%;animation-delay:-2s}
+    .a2{--s:62px;--c:#ff796f;left:45%;bottom:5%}
+    .a3{--s:50px;--c:#6ce3ff;left:62%;bottom:16%;animation-delay:-1.2s}
+    .a4{--s:43px;--c:#a484ff;left:28%;bottom:20%;animation-delay:-3.1s}
+    .a5{--s:36px;--c:#83f5ac;left:51%;bottom:27%;animation-delay:-.7s}
+    .a6{--s:30px;--c:#ffad63;left:38%;bottom:35%;animation-delay:-2.7s}
+    @keyframes float{to{transform:translateY(-5px) rotate(4deg)}}
 
-    /* Rare ambient comet: decorative only, intentionally subtle. */
-    .ambient-comet{
-      --comet-angle:18deg;
-      position:fixed;z-index:5;pointer-events:none;
-      width:90px;height:1px;border-radius:2px;
-      background:linear-gradient(90deg,transparent,var(--world-accent,#4488ff),rgba(255,255,255,.9));
-      box-shadow:0 0 8px var(--world-accent,#4488ff);
-      opacity:0;
-      transform:rotate(var(--comet-angle));
-      animation:ambient-comet-flight 1.75s ease-out forwards;
+    .charge{
+      position:absolute;left:39%;bottom:33%;width:31%;height:15%;
+      filter:drop-shadow(0 0 6px rgba(255,230,128,.85));
+      opacity:.92;pointer-events:none
     }
-    @keyframes ambient-comet-flight{
-      0%{opacity:0;transform:translate3d(0,0,0) rotate(var(--comet-angle)) scaleX(.45)}
-      12%{opacity:.42}
-      100%{opacity:0;transform:translate3d(125vw,34vh,0) rotate(var(--comet-angle)) scaleX(1)}
+    .charge span{
+      position:absolute;width:42%;height:2px;border-radius:10px;
+      background:linear-gradient(90deg,transparent,#fff4bc,#7edcff,transparent);
+      transform-origin:left center;
+      animation:zippy .54s linear infinite
     }
-    @media(prefers-reduced-motion:reduce){.ambient-comet{display:none}.bg-blob{animation:none!important}}
+    .charge span:nth-child(1){left:2%;top:18%;transform:rotate(18deg);animation-delay:-.1s}
+    .charge span:nth-child(2){left:17%;top:46%;transform:rotate(-8deg);animation-delay:-.3s}
+    .charge span:nth-child(3){left:7%;top:70%;transform:rotate(13deg);animation-delay:-.44s}
+    .charge span:nth-child(4){left:28%;top:31%;transform:rotate(-18deg);animation-delay:-.22s}
+    @keyframes zippy{
+      0%{opacity:0;scale:.25 1}
+      22%{opacity:1}
+      100%{opacity:0;translate:56px 3px;scale:1.25 1}
+    }
+    .toast{
+      position:absolute;left:50%;top:76px;transform:translateX(-50%);
+      min-width:185px;padding:9px 13px;text-align:center;
+      border:1px solid rgba(99,231,255,.18);border-radius:13px;
+      background:linear-gradient(180deg,rgba(11,13,29,.94),rgba(7,9,22,.91));
+      box-shadow:0 12px 32px rgba(0,0,0,.27),0 0 20px rgba(99,231,255,.07)
+    }
+    .toast small{display:block;color:#65dff5;font-size:7px;font-weight:900;letter-spacing:.18em}
+    .toast b{display:block;margin-top:2px;font-size:12px}
+    .toast em{display:block;margin-top:5px;color:#ffd86b;font-style:normal;font-size:8px;font-weight:850}
 
-    body{font-family:system-ui,-apple-system,sans-serif;color:#ddddf0}
-
-    /* ── Canvas ── */
-    #renderCanvas{width:100%;height:100%;display:block;touch-action:none;outline:none;position:relative;z-index:6;background:transparent}
-
-    /* ── Header bar ── */
-    #hud{
-      position:fixed;top:0;left:50%;transform:translateX(-50%);
-      display:flex;align-items:center;flex-wrap:wrap;
-      padding:6px 12px;gap:8px;
-      background:rgba(10,10,25,0.92);
-      border-bottom:1px solid rgba(255,255,255,0.06);
-      border-radius:0 0 10px 10px;
-      pointer-events:none;z-index:10;
-      width:calc(100% - 12px);max-width:600px;
-      box-sizing:border-box;
-    }
-    /* Row grouping */
-    .hud-row{display:flex;align-items:center;gap:8px;width:100%}
-    .hud-row-top{justify-content:space-between}
-    .hud-row-bot{justify-content:space-between}
-    .hud-left{display:flex;align-items:center;gap:6px;flex-shrink:0}
-    .hud-right{display:flex;align-items:center;gap:4px;flex-shrink:0}
-    .hud-center{display:flex;align-items:center;gap:4px;flex:1 1 0;justify-content:center;min-width:0;overflow:hidden}
-    #hud>*{pointer-events:auto}
-    .hud-score{display:flex;align-items:center;gap:5px;white-space:nowrap}
-    .hud-score .icon{font-size:15px;opacity:0.8}
-    .hud-score .val{font-size:17px;font-weight:700}
-    .hud-best{font-size:10px;opacity:0.45;white-space:nowrap}
-    .hud-best .bv{font-weight:700;opacity:0.7}
-    .hud-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#b0b0cc;font-size:13px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0}
-    .hud-btn:hover{background:rgba(255,255,255,0.12)}
-
-    #hud-energy{display:flex;align-items:center;gap:5px;flex:1;min-width:0}
-    #etrk{flex:1 1 0;max-width:180px;min-width:24px;height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden}
-    #energy-fill{height:100%;width:100%;background:linear-gradient(90deg,#f5a623,#f7c948);border-radius:4px;transition:width .3s}
-    #hud-energy .e-icon{font-size:14px}
-    #hud-energy .e-val{font-size:13px;font-weight:700;color:#f7c948;min-width:22px}
-
-    @media(max-width:480px){
-      #hud{padding:4px 8px;gap:4px}
-      .hud-row{gap:5px}
-      .hud-score .val{font-size:14px}
-      .hud-score .icon{font-size:13px}
-      .hud-best{display:none}
-      .hud-btn{width:24px;height:24px;font-size:12px}
-      #hud-energy .e-val{font-size:11px;min-width:18px}
-      #hud-energy .e-icon{font-size:12px}
-      #etrk{height:6px;max-width:100px}
-    }
-    @media(max-width:360px){
-      #hud{padding:3px 6px;gap:3px}
-      .hud-score .val{font-size:12px}
-      #etrk{max-width:60px}
-      #server-status{display:none}
-    }
-
-    /* cfg-toggle now uses .hud-btn class */
-
-    /* ── Config panel ── */
-    #cfg{
-      position:fixed;right:0;top:48px;bottom:0;width:156px;
-      background:rgba(6,6,15,0.93);
-      border-left:1px solid rgba(255,255,255,0.06);
-      padding:14px 10px;font-size:11px;z-index:20;overflow-y:auto;
-      transition:transform .25s ease;
-    }
-    #cfg.hidden{transform:translateX(100%);pointer-events:none;opacity:0}
-    .ct{font-size:9px;text-transform:uppercase;letter-spacing:1.4px;opacity:0.38;margin-bottom:10px}
-    .cr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-    .cr span{opacity:0.65}
-    .cr small{opacity:0.4;min-width:28px;text-align:right;font-size:10px}
-    .cr input[type=range]{width:58px;accent-color:#4488ff}
-    .cr select{
-      background:#10102a;color:#b0b0cc;border:1px solid rgba(255,255,255,0.1);
-      padding:3px;font-size:10px;border-radius:3px;width:76px;
-    }
-
-    /* ── Game Over ── */
-    #game-over{
-      position:fixed;inset:0;display:none;flex-direction:column;
-      align-items:center;justify-content:center;
-      background:rgba(6,6,15,0.88);z-index:50;gap:12px;
-    }
-    #game-over h1{font-size:34px;color:#ff5533}
-    #game-over p{font-size:18px;opacity:0.75}
-    #rbtn{
-      margin-top:6px;padding:10px 26px;background:#3355ee;border:none;
-      border-radius:6px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;
-    }
-
-    /* ── Arcade Scoreboard ──────────────────────── */
-    #scoreboard-overlay{
-      position:fixed;inset:0;display:none;flex-direction:column;
-      align-items:center;justify-content:center;
-      background:rgba(6,6,15,0.92);z-index:55;gap:0;
-    }
-    .sb-box{
-      background:rgba(0,0,0,0.7);border:2px solid #ffcc00;border-radius:12px;
-      padding:24px 32px;min-width:300px;max-width:380px;text-align:center;
-      box-shadow:0 0 30px rgba(255,204,0,0.15);
-    }
-    .sb-title{
-      font-size:22px;font-weight:900;color:#ffcc00;letter-spacing:3px;
-      text-transform:uppercase;margin-bottom:4px;
-      text-shadow:0 0 8px rgba(255,204,0,0.5);
-    }
-    .sb-subtitle{font-size:11px;opacity:0.4;margin-bottom:16px}
-    .sb-table{width:100%;border-collapse:collapse;margin:8px 0}
-    .sb-table td{padding:4px 6px;font-size:14px;font-family:'Courier New',monospace}
-    .sb-table .sb-rank{width:30px;color:#ffcc00;text-align:center;font-weight:700}
-    .sb-table .sb-name{color:#44ddff;letter-spacing:2px;font-weight:700;text-align:center;width:60px}
-    .sb-table .sb-pts{text-align:right;color:#fff;font-weight:600}
-    .sb-table .sb-world{font-size:11px;opacity:0.4;text-align:left;padding-left:8px}
-    .sb-table tr.sb-highlight td{color:#ff5;text-shadow:0 0 6px rgba(255,255,80,0.5)}
-    .sb-empty{font-size:13px;opacity:0.35;padding:20px 0}
-    .sb-close{
-      margin-top:16px;padding:8px 24px;background:transparent;border:1px solid #ffcc00;
-      border-radius:6px;color:#ffcc00;font-size:13px;cursor:pointer;letter-spacing:1px;
-    }
-    .sb-close:hover{background:rgba(255,204,0,0.1)}
-
-    /* ── Name Entry ──────────────────────── */
-    #name-entry{
-      position:fixed;inset:0;display:none;flex-direction:column;
-      align-items:center;justify-content:center;
-      background:rgba(6,6,15,0.92);z-index:60;gap:0;
-    }
-    .ne-box{
-      background:rgba(0,0,0,0.7);border:2px solid #ff5533;border-radius:12px;
-      padding:28px 36px;text-align:center;
-      box-shadow:0 0 30px rgba(255,85,51,0.2);
-    }
-    .ne-title{font-size:20px;font-weight:900;color:#ff5533;letter-spacing:2px;margin-bottom:2px}
-    .ne-score{font-size:32px;font-weight:900;color:#ffcc00;margin:8px 0;text-shadow:0 0 10px rgba(255,204,0,0.4)}
-    .ne-prompt{font-size:13px;opacity:0.5;margin-bottom:16px}
-    .ne-letters{display:flex;gap:12px;justify-content:center;margin:12px 0 20px}
-    .ne-letter{
-      width:48px;height:56px;background:rgba(255,255,255,0.05);border:2px solid #ffcc00;
-      border-radius:8px;display:flex;align-items:center;justify-content:center;
-      font-size:32px;font-weight:900;color:#44ddff;font-family:'Courier New',monospace;
-      letter-spacing:2px;cursor:pointer;user-select:none;
-      text-shadow:0 0 6px rgba(68,221,255,0.5);
-    }
-    .ne-letter:hover{border-color:#44ddff;background:rgba(68,221,255,0.1)}
-    .ne-hint{font-size:10px;opacity:0.3;margin-bottom:12px}
-    .ne-ok{
-      padding:10px 32px;background:#ffcc00;border:none;border-radius:6px;
-      color:#111;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:1px;
-    }
-    .ne-ok:hover{background:#ffe044}
-    .hud-world{display:flex;align-items:center;line-height:1}
-    #rbtn:hover{background:#4466ff}
-
-    /* ── Target molecule (clickable in HUD) ── */
-    .target-mol{
-      cursor:pointer;pointer-events:auto;
-      padding:4px 10px;border-radius:10px;
-      background:rgba(255,204,0,0.1);
-      border:1px solid rgba(255,204,0,0.2);
-      transition:all 0.3s;
-      animation:target-pulse 2.5s ease-in-out infinite;
-      -webkit-tap-highlight-color:rgba(255,204,0,0.3);
-      touch-action:manipulation;
-      min-height:28px;display:inline-flex;align-items:center;
-    }
-    .target-mol:hover{
-      background:rgba(255,204,0,0.2);
-      border-color:rgba(255,204,0,0.4);
-      text-shadow:0 0 8px rgba(255,204,0,0.5);
-    }
-    @keyframes target-pulse{
-      0%,100%{border-color:rgba(255,204,0,0.2)}
-      50%{border-color:rgba(255,204,0,0.45)}
+    .tag{
+      position:absolute;right:14px;bottom:12px;
+      padding:5px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.07);
+      color:#747f9c;background:rgba(255,255,255,.03);font-size:8px;font-weight:800;letter-spacing:.08em
     }
 
-    /* ── Molecule Info Popup ── */
-    #mol-info-popup{
-      position:fixed;inset:0;display:none;
-      align-items:flex-start;justify-content:center;
-      padding-top:60px;
-      background:rgba(0,0,15,0.6);
-      z-index:200;
-      animation:mol-fade-in 0.2s ease;
+    @media(max-width:800px){
+      main{grid-template-columns:1fr;gap:28px;padding:28px 0 36px}
+      .copy{text-align:center;margin:auto}.lead{margin:auto}
+      .actions{justify-content:center}
+      .preview-wrap{width:min(480px,100%);margin:auto}
+      .preview{min-height:0;transform:none}
     }
-    @keyframes mol-fade-in{from{opacity:0}to{opacity:1}}
-
-    .mol-popup-card{
-      background:rgba(15,15,35,0.95);
-      border:1px solid rgba(255,255,255,0.1);
-      border-radius:16px;
-      padding:24px 28px;
-      min-width:260px;max-width:340px;
-      backdrop-filter:blur(20px);
-      box-shadow:0 8px 40px rgba(0,0,0,0.5), 0 0 60px rgba(100,100,255,0.08);
-      animation:mol-slide-in 0.25s ease;
-      text-align:center;
+    @media(max-width:460px){
+      main{width:calc(100% - 18px);padding-top:22px}
+      h1{font-size:50px}
+      .lead{font-size:14px}
+      .preview{border-radius:19px}
+      .chamber{width:69%}
+      .archive{width:100%;margin-top:3px}
     }
-    @keyframes mol-slide-in{from{transform:translateY(-15px);opacity:0}to{transform:translateY(0);opacity:1}}
-
-    .mol-popup-header{
-      display:flex;align-items:center;justify-content:center;gap:10px;
-      margin-bottom:18px;
+    @media(prefers-reduced-motion:reduce){
+      *,*:before,*:after{animation:none!important;transition:none!important}
     }
-    .mol-popup-name{
-      font-size:22px;font-weight:800;
-      background:linear-gradient(135deg,#ffcc00,#ff8800);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-      letter-spacing:0.5px;
-    }
-    .mol-popup-diff{
-      font-size:9px;font-weight:800;letter-spacing:1.5px;
-      padding:3px 8px;border-radius:20px;color:#111;
-    }
-
-    .mol-popup-atoms{
-      display:flex;align-items:center;justify-content:center;gap:8px;
-      margin:16px 0;flex-wrap:wrap;
-    }
-    .mol-atom-ball{
-      width:48px;height:48px;border-radius:50%;
-      display:flex;align-items:center;justify-content:center;
-      position:relative;
-    }
-    .mol-atom-sym{
-      font-size:18px;font-weight:900;color:#fff;
-      text-shadow:0 1px 3px rgba(0,0,0,0.7);
-    }
-    .mol-plus{
-      font-size:20px;font-weight:300;opacity:0.4;
-    }
-
-    .mol-popup-hint{
-      font-size:12px;opacity:0.5;line-height:1.5;
-      margin:12px 0 18px;padding:0 8px;
-    }
-
-    .mol-popup-stats{
-      display:flex;justify-content:center;gap:24px;
-      padding-top:14px;
-      border-top:1px solid rgba(255,255,255,0.06);
-    }
-    .mol-stat{
-      display:flex;flex-direction:column;align-items:center;gap:2px;
-    }
-    .mol-stat-icon{font-size:18px}
-    .mol-stat-val{font-size:18px;font-weight:800;color:#fff}
-    .mol-stat-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;opacity:0.35}
-
-    /* ── Debug ── */
-    #atom-count{position:fixed;bottom:10px;right:166px;font-size:9px;opacity:0.25;z-index:10;pointer-events:none}
   </style>
 </head>
 <body>
-  <canvas id="starfield"></canvas>
-  <div class="bg-blob"></div>
-  <div class="bg-blob"></div>
-  <div class="bg-blob"></div>
-  <div class="bg-blob"></div>
-  <div class="bg-blob"></div>
-  <canvas id="renderCanvas"></canvas>
+  <div class="bg"><div class="grid"></div><div class="stars"></div></div>
 
-  <!-- HUD -->
-  <div id="hud">
-    <!-- Row 1: Score | World/Target | Buttons -->
-    <div class="hud-row hud-row-top">
-      <div class="hud-left">
-        <div class="hud-score"><span class="icon">🏆</span><span class="val" id="score-val">0</span></div>
-        <div class="hud-best">BEST <span class="bv" id="best-val">0</span></div>
+  <main>
+    <section class="copy">
+      <div class="eyebrow"><i></i> New ATOMS is live</div>
+      <h1><span>ATOMS</span><br>has evolved.</h1>
+      <p class="lead">The original Atom Merge experiment became a larger, faster game with worlds, reactions, energy, progression and new visual effects.</p>
+      <div class="actions">
+        <a class="play" href="https://atoms.adapteit.com/" rel="noopener">▶ Play the new ATOMS</a>
+        <span class="archive">Original build preserved in this repository.</span>
       </div>
-      <div class="hud-center">
-        <div class="hud-world" id="hud-world" style="font-size:11px;opacity:0.55;display:block;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;min-width:0" title="Current world &amp; target">🌍 W1</div>
+    </section>
+
+    <section class="preview-wrap" aria-label="Preview of the new ATOMS game">
+      <div class="preview-glow"></div>
+      <div class="preview">
+        <div class="hud">
+          <div class="hud-top">
+            <span class="score">🏆 12,740</span>
+            <span class="world">🌍 ORIGINES · LV.4</span>
+            <span class="icons">🧪 ⚙</span>
+          </div>
+          <div class="hud-bot">
+            <div class="bar"><b></b></div>
+            <span class="energy">⚡ 62/90</span>
+            <span class="target">🎯 WATER</span>
+          </div>
+        </div>
+
+        <div class="toast">
+          <small>MOLECULE COMPLETE</small>
+          <b>Water</b>
+          <em>+16 POINTS · +4⚡</em>
+        </div>
+
+        <div class="chamber">
+          <div class="danger"></div>
+          <div class="atom a1">O</div>
+          <div class="atom a2">N</div>
+          <div class="atom a3">C</div>
+          <div class="atom a4">He</div>
+          <div class="atom a5">Li</div>
+          <div class="atom a6">H</div>
+          <div class="charge">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="tag">NEW GAME PREVIEW</div>
       </div>
-      <div class="hud-right">
-        <span id="server-status" title="Score server" style="font-size:8px;opacity:0.6;cursor:help;display:flex;align-items:center;line-height:1">⏳</span>
-        <span class="hud-btn" onclick="openScoreboard()" title="High Scores">📋</span>
-        <button id="sfx-toggle" class="hud-btn" onclick="toggleSfx()">🔊</button>
-        <button id="cfg-toggle" class="hud-btn" onclick="toggleCfg()">⚙</button>
-      </div>
-    </div>
-    <!-- Row 2: Energy bar -->
-    <div class="hud-row hud-row-bot">
-      <div id="hud-energy">
-        <div id="etrk"><div id="energy-fill"></div></div>
-        <span class="e-icon">⚡</span><span class="e-val" id="energy-val">45</span>
-        <span id="combo-display" style="font-size:11px;font-weight:700;color:#ff9900;opacity:0;transition:opacity .3s;margin-left:4px"></span>
-        <span id="drop-cost" style="font-size:10px;opacity:0.45;margin-left:4px;white-space:nowrap">-1⚡</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Config panel -->
-  <div id="cfg" class="hidden">
-    <div class="ct">⚙ Physics Preset</div>
-    <div class="cr">
-      <span>Gravity</span>
-      <input type="range" id="cfg-gravity" min="2" max="25" step="0.5" value="9.81" oninput="updatePhysicsFromUI()">
-      <small id="v-gravity">9.8</small>
-    </div>
-    <div class="cr">
-      <span>Bounce</span>
-      <input type="range" id="cfg-restitution" min="0" max="0.9" step="0.01" value="0.15" oninput="updatePhysicsFromUI()">
-      <small id="v-restitution">0.15</small>
-    </div>
-    <div class="cr">
-      <span>Friction</span>
-      <input type="range" id="cfg-friction" min="0" max="1" step="0.05" value="0.5" oninput="updatePhysicsFromUI()">
-      <small id="v-friction">0.50</small>
-    </div>
-
-    <div class="ct" style="margin-top:14px">⚛ World</div>
-    <div class="cr">
-      <span>World</span>
-      <select id="cfg-world" onchange="setWorldFromUI(this.value)">
-        <!-- populated dynamically -->
-      </select>
-    </div>
-
-    <div class="ct" style="margin-top:14px">✨ Visuals</div>
-    <div class="cr">
-      <span>VFX</span>
-      <select id="cfg-vfx" onchange="setVfxQualityFromUI(this.value)">
-        <option value="auto">Auto</option>
-        <option value="low">Low</option>
-        <option value="high">High</option>
-      </select>
-    </div>
-
-    <div class="ct" style="margin-top:14px">⚛ Elements</div>
-    <div id="legend"></div>
-    <div style="margin-top:16px;text-align:center">
-      <button onclick="restartGame();toggleCfg();" style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:none;border-radius:8px;padding:8px 24px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:0.5px;box-shadow:0 2px 8px rgba(231,76,60,0.4)">🔄 Restart Game</button>
-    </div>
-  </div>
-
-  <!-- Level-up Toast -->
-  <div id="level-toast" style="position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);z-index:80;
-    background:linear-gradient(135deg,rgba(102,126,234,0.9),rgba(118,75,162,0.9));color:#fff;
-    padding:8px 20px;border-radius:20px;font-size:15px;font-weight:700;font-family:Inter,sans-serif;
-    opacity:0;transition:opacity 0.4s,transform 0.4s;pointer-events:none;
-    box-shadow:0 4px 20px rgba(102,126,234,0.4);white-space:nowrap"></div>
-
-  <!-- World Complete -->
-  <div id="world-complete" style="display:none;position:fixed;inset:0;z-index:100;
-    background:rgba(0,0,20,0.88);align-items:center;justify-content:center;font-family:Inter,sans-serif">
-    <div style="text-align:center;color:#fff;max-width:340px;padding:32px">
-      <div style="font-size:56px;margin-bottom:12px">🎉</div>
-      <div id="wc-title" style="font-size:26px;font-weight:800;margin-bottom:8px;
-        background:linear-gradient(135deg,#667eea,#f093fb);-webkit-background-clip:text;-webkit-text-fill-color:transparent">World Complete!</div>
-      <div id="wc-score" style="font-size:16px;opacity:0.6;margin-bottom:28px">Score: 0</div>
-      <button id="wc-continue" style="padding:14px 32px;font-size:16px;font-weight:700;
-        background:linear-gradient(135deg,#667eea,#764ba2);border:none;color:#fff;border-radius:14px;
-        cursor:pointer;box-shadow:0 6px 24px rgba(102,126,234,0.5);transition:transform 0.15s;
-        letter-spacing:0.5px" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">Continue →</button>
-    </div>
-  </div>
-
-  <!-- Molecule Info Popup -->
-  <div id="mol-info-popup" style="display:none" onclick="closeMoleculeInfo()"></div>
-
-  <!-- Game Over -->
-  <div id="game-over">
-    <h1>⚠ Overflow!</h1>
-    <p id="final-score">Score: 0</p>
-    <button id="rbtn" onclick="restartGame()">Play Again</button>
-  </div>
-
-  <!-- Name Entry (arcade 3-letter) -->
-  <div id="name-entry">
-    <div class="ne-box">
-      <div class="ne-title">★ NEW HIGH SCORE ★</div>
-      <div class="ne-score" id="ne-score-val">0</div>
-      <div class="ne-prompt">ENTER YOUR INITIALS</div>
-      <div class="ne-letters">
-        <div class="ne-letter" id="ne-l0" onclick="cycleNameLetter(0)">A</div>
-        <div class="ne-letter" id="ne-l1" onclick="cycleNameLetter(1)">A</div>
-        <div class="ne-letter" id="ne-l2" onclick="cycleNameLetter(2)">A</div>
-      </div>
-      <div class="ne-hint">TAP letter to cycle • SCROLL to pick</div>
-      <button class="ne-ok" onclick="submitHighScore()">OK</button>
-    </div>
-  </div>
-
-  <!-- Scoreboard -->
-  <div id="scoreboard-overlay" onclick="closeScoreboard(event)">
-    <div class="sb-box" onclick="event.stopPropagation()">
-      <div class="sb-title">🏆 HIGH SCORES</div>
-      <div class="sb-subtitle">TOP 10 ALL TIME</div>
-      <div id="sb-body"></div>
-      <button class="sb-close" onclick="closeScoreboard()">CLOSE</button>
-    </div>
-  </div>
-
-  <div id="atom-count">atoms: 0</div>
-
-  <script>
-    function toggleCfg(){
-      var cfg = document.getElementById('cfg');
-      cfg.classList.toggle('hidden');
-    }
-  </script>
-
-  <!-- CDN deps (CSP-safe) -->
-  <script src="https://cdn.jsdelivr.net/npm/cannon@0.6.2/build/cannon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/babylonjs@5/babylon.js"></script>
-  <!-- Game -->
-  <script src="./config.js?v=19"></script>
-  <script src="./molecules.js?v=19"></script>
-  <script src="./game.js?v=19"></script>
+    </section>
+  </main>
 </body>
 </html>
